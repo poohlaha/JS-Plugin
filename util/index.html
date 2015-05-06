@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="jquery.util.min.js"></script>
+    <script type="text/javascript" src="jquery.list.min.js"></script>
+    <script type="text/javascript" src="jquery.map.min.js"></script>
+    <script type="text/javascript">
+        //var map = new SCPUtil("map");
+        var map = SCPUtil.getInstance("map");
+        map.put("1121","1111");
+        map.put(1311,"1112");
+        map.put("1w11","1113");
+
+        var map2 = SCPUtil.getInstance("map");
+        map2.put("1s11","1111");
+        map2.put(1121,"1112");
+        map2.put("1d11","1113");
+
+        var x = map.get(1311);
+        var y = map.get(222);
+
+       var t = map.containsKey("1121");
+       var tx = map.containsKey(1111);
+
+       var txc = map2.containsValue("1112");
+       var txy = map2.containsValue("111x1");
+
+       map2.remove(1121);
+
+       map2.clear();
+       map.keyArray();
+       map.valueArray();
+
+       var x1 =  map2.isEmpty();
+       var x2 = map.isEmpty();
+
+       var xe1 = map.size();
+       var xe2 = map2.size();
+
+        var map3 = SCPUtil.getInstance("map");
+       map3.clone(map);
+       map3.put("test","test");
+
+       var list = SCPUtil.getInstance("List");
+        list.add(111);
+        list.add(123123);
+        list.add(2312);
+
+       var list2 = SCPUtil.getInstance("list");
+       list2.add(1131);
+       list2.add(22662);
+       list2.add(4232);
+       list2.add(8765);
+
+       list.addAll(list2);
+
+       var list3 = SCPUtil.getInstance("List");
+       list3.clone(list2);
+
+
+       var xys = list3.contains("sdfsdfs");
+
+       var xx = list2.contains("222");
+       var xy = list2.contains(222);
+       var xd = list.containsAll(list2);
+       var xe = list.containsAll(list3);
+       list.addByIndex(5,10333);
+
+       list.subList(0,2);
+
+       var ds = list.get(121);
+
+       list3.add("xdfadf");
+       list2.sort();
+       alert(list2.toArray());
+    </script>
+</head>
+<body>
+
+</body>
+</html>
