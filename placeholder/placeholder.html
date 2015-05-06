@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="../jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="placeholder.js"></script>
+    <style>
+        *{margin:0;padding:0}ul{list-style:none;margin-bottom:15px}h3{margin-top:50px}body{margin-left:30px}ul li{color:#4250b3;font-weight:600}hr{margin-bottom:15px}input,textarea{margin-top:20px}input[type="button"]{padding:5px}
+    </style>
+    <script type="text/javascript">
+        $(function() {
+            $("#userName,#personalInformation,#userPwd").placeholder();
+        });
+    </script>
+</head>
+<body>
+        <h3>PlaceHolder插件的使用</h3>
+        <ul>a
+            <li>1、引入js:placeholder.js</li>
+            <li>2、调用方法$("#object").placeholder();</li>
+            <li>3、用jquery获取值</li>
+        </ul>
+        <hr>
+        <span>例:</span><br/>
+        <input type="text" id="userName" name="userName" placeholder="请输入用户名,用户名不能为空..."><br>
+        <input type="password" id="userPwd" name="userName" placeholder="请输入密码,密码不能为空…"><br>
+        <textarea id="personalInformation" name="personalInformation" rows="3" cols="50" maxlength="200" placeholder="请输入用户名个人信息,个人信息最少输入15个字符..."></textarea>
+        <br/>
+        <input type="button" value="获取UserName值" onclick='javascript:alert($("#userName").val());'/>
+        &nbsp;
+        <input type="button" value="获取Passsword值" onclick='javascript:alert($("#userPwd").val());'/>
+        &nbsp;
+        <input type="button" value="获取Textarea值" onclick='javascript:alert($("#personalInformation").val());'/>
+        </body>
+</html>
