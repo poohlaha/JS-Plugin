@@ -63,7 +63,7 @@
 
     scroll.scrollEvent = function (callback) {
         if(!callback && typeof (callback) !== 'function'){
-            callback = function(){};
+            callback = function(){return false;};
         }
         scroll.addEvent(window,'scroll',function(e){scroll.windowScroll(callback)});
         scroll.addEvent(document.body,'onscroll',function(e){scroll.windowScroll(callback)});
