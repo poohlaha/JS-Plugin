@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="../jquery-1.7.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<title></title>
+    <script type="text/javascript">
+       /* $(function(){
+            $(".tree-anchor").hover(function(){
+                if(!$(this).hasClass("tree-hovered")){
+                    $(this).addClass("tree-hovered")
+                }
+            });
+        });*/
+    </script>
+</head>
+<body>
+<div id="tree" class="tree tree-default tree-default-small" role="tree" style="height: 430px;">
+	<ul class="tree-container-ul tree-children tree-striped" role="group">
+		<li role="treeitem" id="/" class="tree-node  tree-open tree-last">
+            <div>
+			<i class="tree-icon tree-ocl" role="presentation"></i>
+			<a class="tree-root  tree-disabled" href="#" id="/_anchor">
+				<i class="tree-icon folder " role="presentation"></i>root
+			</a>
+            </div>
+
+			<ul role="group" class="tree-children">
+				<li role="treeitem" id="New node 3/New node 2" class="tree-node  tree-closed">
+					<i class="tree-icon tree-ocl" role="presentation"></i>
+					<a class="tree-anchor" href="#" id="New node 3/New node 2_anchor">
+						<i class="tree-icon folder" role="presentation"></i>New node 2
+					</a>
+				</li>
+				<li role="treeitem" id="New node 3" class="tree-node  tree-open tree-last">
+					<i class="tree-icon tree-ocl" role="presentation"></i>
+					<a class="tree-anchor  tree-clicked" href="#" id="New node 3_anchor">
+						<i class="tree-icon  folder " role="presentation"></i>New node 3
+					</a>
+					<ul role="group" class="tree-children">
+						<li role="treeitem"  id="New node 3/New node" class="tree-node  tree-leaf tree-last">
+							<i class="tree-icon tree-ocl" role="presentation"></i>
+							<a class="tree-anchor" href="#" id="New node 3/New node_anchor">
+								<i class="tree-icon  file" role="presentation"></i>New node
+							</a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</li>
+	</ul>
+</div>
+</body>
+</html>

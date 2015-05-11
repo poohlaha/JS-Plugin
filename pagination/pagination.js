@@ -1,4 +1,5 @@
 (function(){
+
     function pagination(elem,maxCount,options){
         this.opts = {
             cssName:'pagination.css',
