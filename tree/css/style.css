@@ -179,12 +179,13 @@
 
 .tree-default-small .tree-leaf>.tree-ocl {
     background-position: -71px -7px;
+    margin-left: 3px;
 }
 
 .tree-default-small .tree-anchor{
     line-height: 18px;
     height: 18px;
-    margin-left: 3px;
+    margin-left: 7px;
     outline: none;
 }
 

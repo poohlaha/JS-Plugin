@@ -4,27 +4,22 @@
 (function(){
 
     var opts = {
-
+        'folder-cls':'tree-icon folder',
+        'file-cls':'tree-icon file',
+        'root-id':'/_anchor',
+        'elem-id':'/',
+        'root-text':'root',
+        'node-name':'新节点'
     };
 
-    var root = {
-      "root":{
-          'url':'',
-          'icon':'',
-          'cls':'',
-          'children':[
-              {
 
-              },
-              {
+    function tree(elem,options){
+        if(typeof options != 'object')
+            return;
 
-              }
-          ]
-      }
-    };
-
-    function tree(elem){
-        this.initTree.call(this,elem);
+        this.options = options;
+        this.elem = elem;
+        this.initTree.call(this);
     }
 
     tree.prototype = function(){
@@ -32,22 +27,22 @@
         /**
          * create root
          */
-        createRoot = function(rootName){
+        createRoot = function(){
             var root = document.createElement("div");
             var i  = document.createElement("i");
             i.className = 'tree-icon tree-ocl';
 
             var a = document.createElement("a");
-            a.className = 'tree-root  tree-disabled';
+            a.className = 'tree-root tree-disabled';
             a.href = '#';
-            a.id = '/_anchor';
+            a.id = this.options['id']?this.options['id']:opts['root-id'];
 
             var a_i = document.createElement("i");
             a_i.className = 'tree-icon folder';
             a.appendChild(a_i);
 
             var a_span = document.createElement("span");
-            a_span.innerHTML = rootName?rootName:'root';
+            a_span.innerHTML = this.options['text']?this.options['text']:opts['root-text'];
             a.appendChild(a_span);
 
             root.appendChild(i);
@@ -55,10 +50,10 @@
             return root;
         };
 
-        createNode = function(nodeName){
+        createNode = function(option){
             var node = document.createElement("li");
             node.className = 'tree-node tree-closed';
-            node.id = '';
+            node.id = option['id']?option['id']:'';
 
             var node_i = document.createElement("i");
             node_i.className = 'tree-icon tree-ocl';
@@ -71,7 +66,7 @@
             node_a_i.className = 'tree-icon folder';
 
             var node_a_span = document.createElement("span");
-            node_a_span.innerHTML = nodeName;
+            node_a_span.innerHTML = option['text']?option['text']:opts['node-name'];
 
             node_a.appendChild(node_a_i);
             node_a.appendChild(node_a_span);
@@ -98,25 +93,53 @@
 
         createContainerChildren = function(){
             var containerChildren = document.createElement("li");
-            containerChildren.className = 'tree-node  tree-open tree-last';
-            containerChildren.id = '/';
+            containerChildren.className = 'tree-node tree-open tree-last';
+            containerChildren.id = opts['elem-id'];
             return containerChildren;
         };
 
-        initTree = function(elem){
-            elem = elem.length?elem[0]:elem;
-            elem = initTreeProp(elem);
-            var container = createContainer();
-            var containerChildren = createContainerChildren();
-            var root = createRoot();
-            var node1 = createNode("Node1");
+        createTreeNode = function(children,group,node){
+            var allNode;
+            var self = this;
+            var getNode = function(children,group,node){
+                for(var i = 0;i<children.length;i++){
+                    var node_ = createNode.call(self,children[i],children[i]['text']);
+                    if(node){
+                        node.appendChild(node_);
+                    }
 
-            containerChildren.appendChild(root);
-            containerChildren.appendChild(node1);
+                    if(!node)
+                        allNode = node_;
 
+                    if(!group){
+                        group = createGroup.call(self);
+                    }
 
-            container.appendChild(containerChildren);
-            elem.appendChild(container);
+                    if(children[i]['children']){
+                        getNode.call(self,children[i]['children'],group,node_);
+                    }else{
+                        group.appendChild(allNode);
+                        self.containerChildren.appendChild(group);
+                        group = undefined;
+                    }
+                }
+            };
+
+            getNode(children,group,node);
+        };
+
+        initTree = function(){
+            this.elem = this.elem.length?this.elem[0]:this.elem;
+            this.elem = initTreeProp.call(this,this.elem);
+            this.container = createContainer.call(this);
+            this.containerChildren = createContainerChildren.call(this);
+            var root = createRoot.call(this);
+            this.containerChildren.appendChild(root);
+
+            createTreeNode.call(this,this.options['children']);
+
+            this.container.appendChild(this.containerChildren);
+            this.elem.appendChild(this.container);
         };
 
         initTreeProp = function(elem){
@@ -141,8 +164,8 @@
         };
     }();
 
-    function createTree(elem){
-        return new tree(elem);
+    function createTree(elem,options){
+        return new tree(elem,options);
     }
 
     window.tree = createTree;
