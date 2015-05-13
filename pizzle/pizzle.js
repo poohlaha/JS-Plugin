@@ -1,7 +1,4 @@
-
-
 (function(window,document,undefined){
-
     var Pizzle = (function(window){
         var Express = {};
         Express.filter = {
@@ -192,12 +189,6 @@
 
         return Pizzle;
     })(window);
-
-
-
-
-
-
 
    window._ = window.$ = Pizzle;
    window.Pizzle = Pizzle;
