@@ -90,9 +90,6 @@
 
             init();
             return Pizzle.participle(selector);
-
-
-            //return Pizzle.tokenize(selector);
         }
 
         /**
@@ -113,9 +110,8 @@
                 }
             }
 
-            matched = match[1] || match[2] || match[3] ||'';
-
-            if(matched){
+            if(match){
+                matched = match[1] || match[2] || match[3] ||'';
                 var type = (matched == match[1]) ? "ID" : ((matched == match[2]) ? "TAG" : (matched == match[3]) ? "CLASS" : "");
                 tokens.push({
                     value: matched,
