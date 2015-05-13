@@ -1,11 +1,6 @@
 (function(window,document,undefined){
     var Express = {};
 
-    function init(){
-        Express.expr = getExpr();
-        Express.matchExpr = getMatchExpr();
-    }
-
     function getExpr(){
         var whitespace = "[\\x20\\t\\r\\n\\f]";//空白字符正则字符串
         var operators = "([*^$|!~]?=)";//可用的属性操作符
@@ -60,16 +55,21 @@
         if(!selector)
             return;
 
-        init();
-
         return Pizzle.participle(selector);
     }
+
+    Pizzle.init = function(){
+        Express.expr = getExpr();
+        Express.matchExpr = getMatchExpr();
+    };
 
     /**
      * participle selector
      * @param selector
      */
     Pizzle.participle = function(selector){
+        Pizzle.init();
+
         var match,matched,tokens = [],groups = [];
 
         //Handle HTML strings
