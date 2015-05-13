@@ -218,24 +218,23 @@
 
         var hooks = {
             val : function(){
-                var self = this;
-                //ready(function(){
-                    if(!self.groups || self.groups.length == 0)
-                        return "";
-                    var result = analysisGroup()(self.groups);
+                if(this.context.length == 0)
+                    return "";
+                if(!this.groups || this.groups.length == 0)
+                    return "";
+                var result = analysisGroup(true)(this.groups);
 
-                    if(result.length == 0 || !result[0][0].context){
-                        return "";
-                    }
+                if(result.length == 0 || !result[0][0].context){
+                    return "";
+                }
 
-                    var elem = result[0][0].context;
-                    var ret = elem.value;
-                    return ret ? ((typeof ret === "string") ? ret : "") : "";
-               // });
+                var elem = result[0][0].context;
+                var ret = elem.value;
+                return ret ? ((typeof ret === "string") ? ret : "") : "";
             }
         };
 
-        function analysisGroup(){
+        function analysisGroup(parseOnly){
             return function(groups){
                 var results = [];
                 var i = 0,len = groups.length;
@@ -249,10 +248,12 @@
 
                     var object = filter[type](value)() || [];
 
-                    if(object.length>0)
-                        results.push(object);
+                    if(object.length == 0)
+                        continue;
 
-                    if(type.toUpperCase() === "ID" && object.length > 0){
+                    results.push(object);
+
+                    if(parseOnly){
                         break;
                     }
                 }
@@ -262,10 +263,35 @@
         }
 
         function Selector(selector){
+            return (typeof selector === "function" ) ? Selector.ready(selector) : Selector.init.call(this,selector);
+        }
+
+        Selector.ready = function(callback){
+            document.onreadystatechange = function(){
+                if(document.readyState == "complete"){
+                    callback();
+                }
+            }
+        };
+
+        Selector.init = function(selector){
             var groups = Pizzle(selector);
             this.groups = groups;
-            console.log(groups);
-        }
+            this.context = [];
+
+            if(!this.groups || this.groups.length == 0)
+                return this;
+
+            var result = analysisGroup()(this.groups);
+
+            if(result.length == 0){
+                return this;
+            }
+
+            this.context = result;
+            return this;
+
+        };
 
         Selector.prototype.val = hooks.val;
 

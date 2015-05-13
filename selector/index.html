@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <script type="text/javascript" src = "selector.js"></script>
+    <title></title>
+    <script>
+        $(function(){
+            var c = $("#name,#spwd").val();
+            //var c = $('#name,.cls2,div > p + .aaron[type="checkbox"], #id:first-child,input[class="cls"],#select option:selected');
+            console.log(c);
+        });
+        //});
+    </script>
+</head>
+<body>
+    <input class="cls" value="1111" id="name"><br/>
+    <input class="cls2" value="2222" id="pwd">
+</body>
+</html>
