@@ -255,15 +255,15 @@
             val : function(){
                 if(this.context.length == 0)
                     return "";
-                if(!this.groups || this.groups.length == 0)
+                /*if(!this.groups || this.groups.length == 0)
                     return "";
                 var result = analysisGroup(true)(this.groups);
 
                 if(result.length == 0 || !result[0][0].context){
                     return "";
-                }
+                }*/
 
-                var elem = result[0][0].context;
+                var elem = this.context;
                 var ret = elem.value;
                 return ret ? ((typeof ret === "string") ? ret : "") : "";
             },
@@ -332,7 +332,13 @@
                     if(object.length == 0)
                         continue;
 
-                    results.push(object);
+                    if(object.length > 1){
+                        for(var j =0;j<object.length;j++){
+                            results.push([object[j]]);
+                        }
+                    }else{
+                        results.push(object);
+                    }
 
                     if(parseOnly){
                         break;
@@ -396,14 +402,22 @@
             "ID":function(id){
                 return function(elem){
                     elem = elem ? elem :((typeof document.getElementById(id) !== "undefined")?document.getElementById(id) : document.getAttributeNode(id));
-                    if(elem){
-                        var isAttr = (elem.getAttribute("id") === id) ? true : false;
-                        if(isAttr){
-                            return [{context:elem,type:"ID",value:id,sep:"#"}];
-                        }else{
-                            return [];
-                        }
+                    var results = [];
+                    if(!elem)
+                        return results;
+
+                    var isAttr = (elem.getAttribute("id") === id) ? true : false;
+                    if(!isAttr){
+                        return results;
                     }
+                    results.push({
+                        context:elem,
+                        type:"ID",
+                        value:id,
+                        sep:"#"
+                    });
+
+                    return results;
                 }
             },
 
