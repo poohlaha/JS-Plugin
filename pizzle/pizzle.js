@@ -1,6 +1,8 @@
 (function(window,document,undefined){
     var Express = {};
 
+    var Support = {};
+
     function getExpr(){
         var whitespace = "[\\x20\\t\\r\\n\\f]";//空白字符正则字符串
         var operators = "([*^$|!~]?=)";//可用的属性操作符
@@ -61,6 +63,7 @@
     Pizzle.init = function(){
         Express.expr = getExpr();
         Express.matchExpr = getMatchExpr();
+        Support.isQSA = Express.expr['rnative'].test(document.querySelectorAll);
     };
 
     /**
@@ -68,19 +71,20 @@
      * @param selector
      */
     Pizzle.participle = function(selector){
-        Pizzle.init();
+        if(typeof selector !== "string"){
+            return [];
+        }
 
+        Pizzle.init();
         var match,matched,tokens = [],groups = [];
 
         //Handle HTML strings
-        if(typeof selector === "string"){
-            if ( selector.charAt(0) === "<" && selector.charAt( selector.length - 1 ) === ">" && selector.length >= 3 ) {
-                // Assume that strings that start and end with <> are HTML and skip the regex check
-                var m = selector.substring(1,selector.length - 1);
-                match = [ null, null,m, null ];
-            } else {
-                match = Express.expr.rquickExpr.exec(selector);
-            }
+        if ( selector.charAt(0) === "<" && selector.charAt( selector.length - 1 ) === ">" && selector.length >= 3 ) {
+            // Assume that strings that start and end with <> are HTML and skip the regex check
+            var m = selector.substring(1,selector.length - 1);
+            match = [ null, null,m, null ];
+        } else {
+            match = Express.expr.rquickExpr.exec(selector);
         }
 
         if(match){
