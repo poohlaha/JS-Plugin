@@ -14,6 +14,21 @@
         }
     }
 
+    function assert(fn){
+        var div = document.createElement("div");
+        try{
+            return !!fn(div);
+        }catch(e){
+            return false;
+        }finally{
+            if(div.parentNode){
+                div.parentNode.removeChild( div );
+            }
+
+            div = null;
+        }
+    }
+
     var Pizzle = (function(window){
         var Express = {};
 
@@ -87,18 +102,20 @@
          * @param selector
          */
         Pizzle.participle = function(selector){
+            if(typeof selector !== "string"){
+                return [];
+            }
+
             Pizzle.init();
             var match,matched,tokens = [],groups = [];
 
             //Handle HTML strings
-            if(typeof selector === "string"){
-                if ( selector.charAt(0) === "<" && selector.charAt( selector.length - 1 ) === ">" && selector.length >= 3 ) {
-                    // Assume that strings that start and end with <> are HTML and skip the regex check
-                    var m = selector.substring(1,selector.length - 1);
-                    match = [ null, null,m, null ];
-                } else {
-                    match = Express.expr.rquickExpr.exec(selector);
-                }
+            if ( selector.charAt(0) === "<" && selector.charAt( selector.length - 1 ) === ">" && selector.length >= 3 ) {
+                // Assume that strings that start and end with <> are HTML and skip the regex check
+                var m = selector.substring(1,selector.length - 1);
+                match = [ null, null,m, null ];
+            } else {
+                match = Express.expr.rquickExpr.exec(selector);
             }
 
             if(match){
@@ -189,21 +206,6 @@
             return documentElement ? documentElement.nodeName !== "HTML" : false;
         };
 
-        function assert(fn){
-            var div = document.createElement("div");
-            try{
-                return !!fn(div);
-            }catch(e){
-                return false;
-            }finally{
-                if(div.parentNode){
-                    div.parentNode.removeChild( div );
-                }
-
-                div = null;
-            }
-        }
-
         return Pizzle;
     })(window);
 
@@ -211,10 +213,43 @@
     var Selector = (function(Pizzle){
 
         /*function ready(callback){
-            addEvent(window,'load',function(){
-                callback();
-            });
-        }*/
+         addEvent(window,'load',function(){
+         callback();
+         });
+         }*/
+        var Normal = {
+
+            isArray : function(obj){
+                var length = "length" in obj && obj.length;
+
+                if(typeof obj === "function"){
+                    return false;
+                }
+
+                if(obj.nodeType === 1 && length)
+                    return true;
+
+                return typeof obj === "array" || length === 0 ||
+                    typeof length === "number" && length > 0 && (length - 1) in obj;
+
+            },
+
+            isNative:function(fn){
+                return Expr.rnative.test(fn + "");
+            }
+
+
+        };
+
+        var Expr = {
+            whitespace : "[\\x20\\t\\r\\n\\f]",//空白字符正则字符串
+            rnative : /^[^{]+\{\s*\[native code/,//原生函数正则
+        };
+
+        var Support = {
+            getElementsByClassName : Normal.isNative(document.getElementsByClassName)
+
+        };
 
         var hooks = {
             val : function(){
@@ -231,8 +266,51 @@
                 var elem = result[0][0].context;
                 var ret = elem.value;
                 return ret ? ((typeof ret === "string") ? ret : "") : "";
+            },
+
+            each:function(obj,callback,args){
+                var value,i = 0,length = obj.length;
+                var isArray = Normal.isArray(obj);
+                if(args){
+                    if(isArray){
+                        for(;i < length ; i++){
+                            value = callback.apply(obj[i][0],args);
+                            if(value === false){
+                                break;
+                            }
+                        }
+                    }else{
+                        for(i in obj){
+                            value = callback.apply(obj[i][0],args);
+                            if(value === false){
+                                break;
+                            }
+                        }
+                    }
+                }else{
+                    if(isArray){
+                        for(;i<length;i++){
+                            value = callback.call(obj[i][0], i, obj[i][0].context);
+
+                            if (value === false) {
+                                break;
+                            }
+                        }
+                    }else{
+                        for(i in obj){
+                            value = callback.call(obj[i][0], i, obj[i][0].context);
+
+                            if (value === false) {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return obj;
             }
         };
+
 
         function analysisGroup(parseOnly){
             return function(groups){
@@ -245,6 +323,9 @@
                     var _obj = obj[0];
                     var type = _obj.type;
                     var value = _obj.value;
+
+                    if(!value)
+                        continue;
 
                     var object = filter[type](value)() || [];
 
@@ -275,25 +356,41 @@
         };
 
         Selector.init = function(selector){
-            var groups = Pizzle(selector);
-            this.groups = groups;
-            this.context = [];
+            if(typeof selector === "string"){
+                var groups = Pizzle(selector);
+                this.groups = groups;
+                this.context = [];
 
-            if(!this.groups || this.groups.length == 0)
+                if(!this.groups || this.groups.length == 0)
+                    return this;
+
+                var result = analysisGroup()(this.groups);
+
+                if(result.length == 0){
+                    return this;
+                }
+
+                this.context = result;
+                console.log(this);
                 return this;
-
-            var result = analysisGroup()(this.groups);
-
-            if(result.length == 0){
+            }else if(selector.context && selector.context.nodeType && selector.context.nodeType === 1){//elem
+                var groups = [];
+                groups.push([{
+                    sep:selector.sep?selector.sep:"",
+                    type:selector.type?selector.type:"",
+                    value:selector.value?selector.value:""
+                }]);
+                this.groups = groups;
+                this.context = selector.context;
                 return this;
             }
-
-            this.context = result;
-            return this;
 
         };
 
         Selector.prototype.val = hooks.val;
+        Selector.prototype.each = function(callback,args){
+            return hooks.each(this.context,callback,args);
+        };
 
         var filter = {
             "ID":function(id){
@@ -302,7 +399,7 @@
                     if(elem){
                         var isAttr = (elem.getAttribute("id") === id) ? true : false;
                         if(isAttr){
-                            return [{context:elem,type:"ID",value:id}];
+                            return [{context:elem,type:"ID",value:id,sep:"#"}];
                         }else{
                             return [];
                         }
@@ -311,11 +408,29 @@
             },
 
             "CLASS":function(className){
-                var pattern;
-                return (pattern = new RegExp( "(^|" + Express.expr['whitespace'] + ")" + className + "(" + Express.expr['whitespace'] + "|$)" ))
-                    && function(elem){
-                        return pattern.test( typeof elem.className === "string" && elem.className || typeof elem.getAttribute !== "undefined" && elem.getAttribute("class") || "" );
+                return function(){
+                    if(Support.getElementsByClassName){
+                        var contexts = document.getElementsByClassName(className);
+                        var len = contexts.length,i = 0;
+                        var results = [];
+                        if(!contexts.length){
+                            return results;
+                        }
+
+                        for(; i < len; i++){
+                            results.push({
+                                context:contexts[i]?contexts[i]:"",
+                                type:"CLASS",
+                                sep:".",
+                                value:className
+                            });
+                        }
+
+                        return results;
+                    }else{
+                        return [];
                     }
+                }
             },
 
             "TAG":function(nodeNameSelector){
@@ -346,17 +461,17 @@
 })(window,document,undefined);
 
 /**
-    节点类型	                      描述	                                                   子节点
-1	Element	                      代表元素	                                                Element, Text, Comment, ProcessingInstruction, CDATASection, EntityReference
-2	Attr	                      代表属性	                                                Text, EntityReference
-3	Text	                      代表元素或属性中的文本内容。	                                None
-4	CDATASection	              代表文档中的 CDATA 部分（不会由解析器解析的文本）。	            None
-5	EntityReference	              代表实体引用。	                                            Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-6	Entity	                      代表实体。	                                                Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-7	ProcessingInstruction	      代表处理指令。	                                            None
-8	Comment	                      代表注释。	                                                None
-9	Document	                  代表整个文档（DOM 树的根节点）。	                            Element, ProcessingInstruction, Comment, DocumentType
-10	DocumentType	              向为文档定义的实体提供接口	                                None
-11	DocumentFragment	          代表轻量级的 Document 对象，能够容纳文档的某个部分	            Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
-12	Notation	                  代表 DTD 中声明的符号。	                                    None;
+ 节点类型	                      描述	                                                   子节点
+ 1	Element	                      代表元素	                                                Element, Text, Comment, ProcessingInstruction, CDATASection, EntityReference
+ 2	Attr	                      代表属性	                                                Text, EntityReference
+ 3	Text	                      代表元素或属性中的文本内容。	                                None
+ 4	CDATASection	              代表文档中的 CDATA 部分（不会由解析器解析的文本）。	            None
+ 5	EntityReference	              代表实体引用。	                                            Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+ 6	Entity	                      代表实体。	                                                Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+ 7	ProcessingInstruction	      代表处理指令。	                                            None
+ 8	Comment	                      代表注释。	                                                None
+ 9	Document	                  代表整个文档（DOM 树的根节点）。	                            Element, ProcessingInstruction, Comment, DocumentType
+ 10	DocumentType	              向为文档定义的实体提供接口	                                None
+ 11	DocumentFragment	          代表轻量级的 Document 对象，能够容纳文档的某个部分	            Element, ProcessingInstruction, Comment, Text, CDATASection, EntityReference
+ 12	Notation	                  代表 DTD 中声明的符号。	                                    None;
  **/
