@@ -447,11 +447,38 @@
                 }
             },
 
-            "TAG":function(nodeNameSelector){
-                var nodeName = nodeNameSelector.toLowerCase();
-                return nodeNameSelector === "*" ? function(){return true;} :function(elem){
-                    return elem.nodeName && elem.nodeName.toLowerCase() === nodeName;
+            "TAG":function(tagName){
+                var elem,tmp = [],i = 0;
+                var results = document.getElementsByTagName(tagName);
+                if(tagName === "*"){
+                    while ((elem = results[i++])){
+                        if(elem.nodeType === 1){
+                            tmp.push({
+                                context:elem?elem:"",
+                                type:"TAG",
+                                sep:"",
+                                value:tagName
+                            });
+                        }
+                    }
+
+                    return tmp;
                 }
+
+                if(results.length == 0){
+                    return tmp;
+                }
+
+                for(;i<results.length;i++){
+                    tmp.push({
+                        context:results[i]?results[i]:"",
+                        type:"TAG",
+                        sep:"",
+                        value:tagName
+                    });
+                }
+
+                return tmp;
             },
 
             "ATTR":function(name, operator, check){
