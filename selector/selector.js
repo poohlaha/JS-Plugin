@@ -212,13 +212,7 @@
 
     var Selector = (function(Pizzle){
 
-        /*function ready(callback){
-         addEvent(window,'load',function(){
-         callback();
-         });
-         }*/
         var Normal = {
-
             isArray : function(obj){
                 var length = "length" in obj && obj.length;
 
@@ -236,6 +230,19 @@
 
             isNative:function(fn){
                 return Expr.rnative.test(fn + "");
+            },
+
+            indexOf : function(arr,elem){
+                if(!Normal.isArray(arr))
+                    return -1;
+
+                var i = 0,len = arr.length;
+                for(;i<len;i++){
+                    if(this[i] === elem){
+                        return i;
+                    }
+                }
+                return -1;
             }
 
 
@@ -243,25 +250,18 @@
 
         var Expr = {
             whitespace : "[\\x20\\t\\r\\n\\f]",//空白字符正则字符串
-            rnative : /^[^{]+\{\s*\[native code/,//原生函数正则
+            rnative : /^[^{]+\{\s*\[native code///原生函数正则
         };
 
         var Support = {
-            getElementsByClassName : Normal.isNative(document.getElementsByClassName)
-
+            getElementsByClassName : Normal.isNative(document.getElementsByClassName),
+            isQSA : Expr['rnative'].test(document.querySelectorAll)
         };
 
         var hooks = {
             val : function(){
                 if(this.context.length == 0)
                     return "";
-                /*if(!this.groups || this.groups.length == 0)
-                    return "";
-                var result = analysisGroup(true)(this.groups);
-
-                if(result.length == 0 || !result[0][0].context){
-                    return "";
-                }*/
 
                 var elem = this.context;
                 var ret = elem.value;
@@ -275,34 +275,24 @@
                     if(isArray){
                         for(;i < length ; i++){
                             value = callback.apply(obj[i][0],args);
-                            if(value === false){
-                                break;
-                            }
+                            if(value === false)  break;
                         }
                     }else{
                         for(i in obj){
                             value = callback.apply(obj[i][0],args);
-                            if(value === false){
-                                break;
-                            }
+                            if(value === false)  break;
                         }
                     }
                 }else{
                     if(isArray){
                         for(;i<length;i++){
                             value = callback.call(obj[i][0], i, obj[i][0].context);
-
-                            if (value === false) {
-                                break;
-                            }
+                            if (value === false)  break;
                         }
                     }else{
                         for(i in obj){
                             value = callback.call(obj[i][0], i, obj[i][0].context);
-
-                            if (value === false) {
-                                break;
-                            }
+                            if (value === false)  break;
                         }
                     }
                 }
@@ -318,20 +308,23 @@
                 var i = 0,len = groups.length;
                 for(;i<len;i++){
                     var obj = groups[i];
+                    if(obj.length == 0) continue;
+
+                    var j = 0,l = obj.length;
+                    for(;j<l;j++){
+                        if(Normal.indexOf(obj," ")!=-1){
+
+                        }
+                    }
+
                     if(!obj || !obj[0])  break;
 
-                    var _obj = obj[0];
-                    var type = _obj.type;
-                    var value = _obj.value;
+                    var _obj = obj[0],type = _obj.type,value = _obj.value;
 
-                    if(!value)
-                        continue;
+                    if(!value) continue;
 
                     var object = filter[type](value)() || [];
-
-                    if(object.length == 0)
-                        continue;
-
+                    if(object.length == 0) continue;
                     if(object.length > 1){
                         for(var j =0;j<object.length;j++){
                             results.push([object[j]]);
@@ -340,13 +333,11 @@
                         results.push(object);
                     }
 
-                    if(parseOnly){
-                        break;
-                    }
+                    if(parseOnly) break;
                 }
 
                 return results;
-            };
+            }
         }
 
         function Selector(selector){
@@ -363,20 +354,37 @@
 
         Selector.init = function(selector){
             if(typeof selector === "string"){
-                var groups = Pizzle(selector);
-                this.groups = groups;
-                this.context = [];
+                if(Support.isQSA){
+                    var contexts = document.querySelectorAll(selector);
+                    var len = contexts.length,i = 0;
+                    var results = [];
+                    if(!len || len == 0){
+                        this.context = results;
+                        return this;
+                    }
 
-                if(!this.groups || this.groups.length == 0)
-                    return this;
 
-                var result = analysisGroup()(this.groups);
+                    for(; i < len; i++){
+                        results.push([{
+                            context:contexts[i]?contexts[i]:"",
+                            type:"NODE"
+                        }]);
+                    }
 
-                if(result.length == 0){
-                    return this;
+                    this.context = results;
+                }else{
+                    groups = Pizzle(selector);
+                    this.groups = groups;
+                    if(!this.groups || this.groups.length == 0)
+                        return this;
+
+                    var result = analysisGroup()(this.groups);
+
+                    if(result.length == 0)
+                        return this;
+
+                    this.context = result;
                 }
-
-                this.context = result;
                 console.log(this);
                 return this;
             }else if(selector.context && selector.context.nodeType && selector.context.nodeType === 1){//elem
@@ -407,9 +415,9 @@
                         return results;
 
                     var isAttr = (elem.getAttribute("id") === id) ? true : false;
-                    if(!isAttr){
+                    if(!isAttr)
                         return results;
-                    }
+
                     results.push({
                         context:elem,
                         type:"ID",
@@ -427,9 +435,8 @@
                         var contexts = document.getElementsByClassName(className);
                         var len = contexts.length,i = 0;
                         var results = [];
-                        if(!contexts.length){
+                        if(!contexts.length)
                             return results;
-                        }
 
                         for(; i < len; i++){
                             results.push({
@@ -466,9 +473,8 @@
                         return tmp;
                     }
 
-                    if(results.length == 0){
+                    if(results.length == 0)
                         return tmp;
-                    }
 
                     for(;i<results.length;i++){
                         tmp.push({
