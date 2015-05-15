@@ -162,7 +162,7 @@
                 if((match = Express.expr.rcombinators.exec(str))!=null){
                     matched = match.shift();
                     tokens.push({
-                        value:matched,
+                        value:matched == " " ? matched : matched.trim(),
                         type:match[0].replace(Express.expr.rtrim," ")
                     });
 
@@ -238,11 +238,26 @@
 
                 var i = 0,len = arr.length;
                 for(;i<len;i++){
-                    if(this[i] === elem){
+                    if(arr[i] === elem){
                         return i;
                     }
                 }
                 return -1;
+            },
+
+            isObjExsist : function(arr,elem){
+                if(arr.length === 0){
+                    return false;
+                }
+
+                for(var i = 0;i<arr.length;i++){
+                    var obj = arr[i][0].context;
+                    if(obj === elem.context){
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
 
@@ -250,7 +265,18 @@
 
         var Expr = {
             whitespace : "[\\x20\\t\\r\\n\\f]",//空白字符正则字符串
-            rnative : /^[^{]+\{\s*\[native code///原生函数正则
+            rnative : /^[^{]+\{\s*\[native code/,//原生函数正则
+            rsibling : /[\x20\t\r\n\f]*[+~]/, //弟兄正则
+            needsContext:function(){//开始为>+~或位置伪类，如果选择器中有位置伪类解析从左往右
+                return new RegExp( "^" + Expr.whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" +
+                Expr.whitespace + "*((?:-\\d)?\\d*)" + Expr.whitespace + "*\\)|)(?=[^-]|$)", "i" );
+            },
+            relative:{
+                ">": { dir: "parentNode", first: true },
+                " ": { dir: "parentNode" },
+                "+": { dir: "previousSibling", first: true },
+                "~": { dir: "previousSibling" }
+            }
         };
 
         var Support = {
@@ -310,30 +336,32 @@
                     var obj = groups[i];
                     if(obj.length == 0) continue;
 
-                    var j = 0,l = obj.length;
-                    for(;j<l;j++){
-                        if(Normal.indexOf(obj," ")!=-1){
+                    if(!obj) continue;
 
+                    for(var x =0;x<obj.length;x++){
+                        var _obj = obj[x],type = _obj.type,value = _obj.value;
+
+                        if(!value) continue;
+                        if(type in Expr.relative) continue;
+
+                        var object = filter[type](value)() || [];
+                        if(object.length == 0) continue;
+                        if(object.length > 1){
+                            for(var j =0;j<object.length;j++){
+                                if(!Normal.isObjExsist(results,object[j])){
+                                    results.push([object[j]]);
+                                }
+                            }
+                        }else{
+                            if(!Normal.isObjExsist(results,object[0])){
+                                results.push(object);
+                            }
                         }
+
+                        if(parseOnly) return results;
                     }
 
-                    if(!obj || !obj[0])  break;
 
-                    var _obj = obj[0],type = _obj.type,value = _obj.value;
-
-                    if(!value) continue;
-
-                    var object = filter[type](value)() || [];
-                    if(object.length == 0) continue;
-                    if(object.length > 1){
-                        for(var j =0;j<object.length;j++){
-                            results.push([object[j]]);
-                        }
-                    }else{
-                        results.push(object);
-                    }
-
-                    if(parseOnly) break;
                 }
 
                 return results;
@@ -354,7 +382,8 @@
 
         Selector.init = function(selector){
             if(typeof selector === "string"){
-                if(Support.isQSA){
+                selector = selector.trim();
+                if(!Support.isQSA){
                     var contexts = document.querySelectorAll(selector);
                     var len = contexts.length,i = 0;
                     var results = [];
@@ -362,7 +391,6 @@
                         this.context = results;
                         return this;
                     }
-
 
                     for(; i < len; i++){
                         results.push([{
@@ -378,12 +406,14 @@
                     if(!this.groups || this.groups.length == 0)
                         return this;
 
-                    var result = analysisGroup()(this.groups);
+                    //var result = analysisGroup()(this.groups);
 
-                    if(result.length == 0)
-                        return this;
+                    //if(result.length == 0)
+                        //return this;
 
-                    this.context = result;
+                    var rets = Selector.match()(this.groups,selector);
+
+                    this.context = rets;
                 }
                 console.log(this);
                 return this;
@@ -404,6 +434,126 @@
         Selector.prototype.val = hooks.val;
         Selector.prototype.each = function(callback,args){
             return hooks.each(this.context,callback,args);
+        };
+
+        Selector.select = function(){
+            return function(selector,tokens){
+                if(tokens.length == 0){
+                    return [];
+                }
+
+                var i,token,type,seed = [],flag="",pt="",value;
+                i = Expr.needsContext().test( selector ) ? 0 : tokens.length;
+                var count = 0;
+                while(i--){
+                    token = tokens[i];
+                    type = token.type;
+                    value = token.value;
+                    if((!seed[0] || seed[0].length == 0) && count != 0){
+                        count++;
+                        continue;
+                    }
+
+                    if(type in filter){
+                        var node = filter[type](token.value)();
+
+                        if(flag === "parentNode"){
+                            var s = [];
+                            for(var j = 0;j<seed[0].length;j++){
+                                var node_context = seed[0][j].context;
+                                if(!node_context.parentNode)
+                                    continue;
+
+                                var getParentNode = function(elem){
+                                    for(var t = 0;t < node.length;t++){
+                                        if(node[t].context === elem){
+                                            s.push(seed[0][j]);
+                                            return;
+                                        }
+                                    }
+
+                                    if(!elem.parentNode)
+                                        return;
+
+                                    return getParentNode(elem.parentNode);
+                                };
+
+                                getParentNode(node_context.parentNode);
+                            }
+
+                            seed.length = 0;
+                            seed.push(s);
+                        }else if(flag === "previousSibling"){
+                            var s = [];
+                            for(var j = 0;j<seed[0].length;j++){
+                                var node_context = seed[0][j].context;
+                                if(!node_context.previousSibling)
+                                    continue;
+
+                                var getPrevNode = function(elem){
+                                    for(var t = 0;t < node.length;t++){
+                                        if(node[t].context === elem){
+                                            s.push(seed[0][j]);
+                                            return;
+                                        }
+                                    }
+
+                                    if(!elem.previousSibling)
+                                        return;
+
+                                    return getPrevNode(elem.previousSibling);
+                                };
+
+                                getPrevNode(node_context.previousSibling);
+                            }
+
+                            seed.length = 0;
+                            seed.push(s);
+
+                        }else{
+                            if(count === 0){
+                                seed.push(node);
+                                count++;
+                                continue;
+                            }
+
+                            var s = []
+                            for(var j = 0;j<seed[0].length;j++){
+                                var node_context = seed[0][j].context;
+                                if(node_context.nodeName === (value).toUpperCase()){
+                                    s.push(seed[0][j]);
+                                }
+                            }
+
+                            seed.length = 0;
+                            seed.push(s);
+                        }
+
+                    }else if(type in Expr.relative){//关系符号
+                        flag = Expr.relative[type].dir;
+                        pt = type;
+                    }
+
+                    count++;
+                }
+
+                return seed;
+            }
+        };
+
+        Selector.match = function(){
+            return function(tokens,selector){
+                var results = [];
+                for(var i =0;i<tokens.length;i++){
+                   var seed = Selector.select()(selector,tokens[i]);
+                   if(seed.length > 0)
+                       results.push(seed);
+                }
+
+                console.log(results);
+                return results;
+            };
+
         };
 
         var filter = {
@@ -430,9 +580,10 @@
             },
 
             "CLASS":function(className){
-                return function(){
+                return function(elem){
                     if(Support.getElementsByClassName){
-                        var contexts = document.getElementsByClassName(className);
+                        elem = elem ? elem : document;
+                        var contexts = elem.getElementsByClassName(className);
                         var len = contexts.length,i = 0;
                         var results = [];
                         if(!contexts.length)
@@ -455,14 +606,15 @@
             },
 
             "TAG":function(tagName){
-                return function(){
-                    var elem,tmp = [],i = 0;
-                    var results = document.getElementsByTagName(tagName);
+                return function(elem){
+                    elem = elem ? elem : document;
+                    var _elem,tmp = [],i = 0;
+                    var results = elem.getElementsByTagName(tagName);
                     if(tagName === "*"){
-                        while ((elem = results[i++])){
-                            if(elem.nodeType === 1){
+                        while ((_elem = results[i++])){
+                            if(_elem.nodeType === 1){
                                 tmp.push({
-                                    context:elem?elem:"",
+                                    context:_elem?_elem:"",
                                     type:"TAG",
                                     sep:"",
                                     value:tagName
@@ -507,6 +659,7 @@
 
     window._ = window.$ = getSelector;
     window.Selector = getSelector;
+    window.select = Selector.match;
 })(window,document,undefined);
 
 /**
