@@ -479,6 +479,7 @@
                             for(var j = 0;j<seed[0].length;j++){
                                 var node_context = seed[0][j].context;
                                 var pNode;
+
                                 if(flag === "parentNode"){
                                     if(pt in Expr.relative){
                                         pNode = seed[0][j].pNode?seed[0][j].pNode.parentNode:node_context.parentNode;
@@ -489,7 +490,6 @@
                                 }else{
                                     pNode = node_context.previousSibling;
                                 }
-                                //var pNode = (flag === "parentNode") ? (seed[0][j].pNode ? seed[0][j].pNode : node_context.parentNode) : node_context.previousSibling;
                                 if(!pNode)
                                     continue;
 
