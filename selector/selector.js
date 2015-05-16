@@ -296,7 +296,7 @@
                 }
 
                 var elem = this.context;
-                elem = (elem.type && elem.type === 1)? elem : function(){
+                elem = (elem.type && elem.nodeType === 1)? elem : function(){
                     if(Normal.isArray(elem)){
                         var results = [];
                         for(var i = 0;i<elem.length;i++){
