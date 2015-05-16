@@ -290,7 +290,37 @@
                     return "";
 
                 var elem = this.context;
-                var ret = elem.value;
+                elem = (elem.type && elem.type === 1)? elem : function(){
+                    if(Normal.isArray(elem)){
+                        var results = [];
+                        for(var i = 0;i<elem.length;i++){
+                            var obj = elem[i];
+                            if(!obj[0] || !obj[0].context) continue;
+                            var type = obj[0].type;
+                            if(type in Expr.relative) continue;
+
+                            if(Normal.indexOf(results,obj[0].context) == -1){
+                                results.push(obj[0].context);
+                            }
+                        }
+
+                        return results;
+                    }else{
+                        return elem[0] ? ( elem[0].context ? (elem[0].context) : null ) : null;
+                    }
+
+                }();
+
+                if(!elem || elem.length === 0) return "";
+
+                var ret = (Normal.isArray(elem) === true)?function(){
+                    for(var j =0;j<elem.length;j++){
+                        var obj = elem[j];
+                        ret = obj.value;
+                        if(ret != undefined) return ret;
+                    }
+                }():elem.value;
+
                 return ret ? ((typeof ret === "string") ? ret : "") : "";
             },
 
@@ -494,7 +524,7 @@
 
         };
 
-        Selector.analysisGroup = function(parseOnly){
+        Selector.analysisGroup = function(){
             return function(groups){
                 var results = [];
                 var i = 0,len = groups.length;
@@ -513,10 +543,7 @@
                         if(!Normal.isObjExsist(results,_obj)){
                             results.push([_obj]);
                         }
-
-                        if(parseOnly) return results;
                     }
-
                 }
 
                 return results;
