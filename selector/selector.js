@@ -214,6 +214,9 @@
 
         var Normal = {
             isArray : function(obj){
+                if(!obj.length)
+                    return false;
+
                 var length = "length" in obj && obj.length;
 
                 if(typeof obj === "function"){
@@ -285,9 +288,12 @@
         };
 
         var hooks = {
-            val : function(){
-                if(!this.context || this.context.length == 0)
-                    return "";
+            val : function(value){
+
+                if(!this.context || this.context.length == 0){
+                    if(value != undefined ) return ;
+                    else return "";
+                }
 
                 var elem = this.context;
                 elem = (elem.type && elem.type === 1)? elem : function(){
@@ -311,17 +317,38 @@
 
                 }();
 
-                if(!elem || elem.length === 0) return "";
+                if(!elem || elem.length === 0){
+                    if(value != undefined ) return ;
+                    else return "";
+                }
 
-                var ret = (Normal.isArray(elem) === true)?function(){
-                    for(var j =0;j<elem.length;j++){
-                        var obj = elem[j];
-                        ret = obj.value;
-                        if(ret != undefined) return ret;
-                    }
-                }():elem.value;
+                if(value!= undefined){
+                    (Normal.isArray(elem) === true)?function(){
+                        for(var j =0;j<elem.length;j++){
+                            var obj = elem[j];
+                            (typeof value == "string" && value.constructor== String) ? obj.value = value : ( Normal.isArray(value) === true ? function(){
+                                var str = "";
+                                for(var x = 0;x<value.length;x++){
+                                    if(value[x]){
+                                        (x != value.length - 1) ? str = str + value[x] + ",":str = str + value[x];
+                                    }
+                                }
+                                obj.value = str;
+                            }(): obj.value = value);
+                        }
+                    }():elem.value = value;
+                }else{
+                    var ret = (Normal.isArray(elem) === true)?function(){
+                        for(var j =0;j<elem.length;j++){
+                            var obj = elem[j];
+                            ret = obj.value;
+                            if(ret != undefined) return ret;
+                        }
+                    }():elem.value;
 
-                return ret ? ((typeof ret === "string") ? ret : "") : "";
+                    return ret ? ((typeof ret === "string") ? ret : "") : "";
+                }
+
             },
 
             each:function(obj,callback,args){
@@ -451,30 +478,54 @@
                             var s = [];
                             for(var j = 0;j<seed[0].length;j++){
                                 var node_context = seed[0][j].context;
-                                var pNode = (flag === "parentNode") ? node_context.parentNode : node_context.previousSibling;
+                                var pNode;
+                                if(flag === "parentNode"){
+                                    if(pt in Expr.relative){
+                                        pNode = seed[0][j].pNode?seed[0][j].pNode.parentNode:node_context.parentNode;
+                                    }else{
+                                        pNode = seed[0][j].pNode;
+                                    }
+
+                                }else{
+                                    pNode = node_context.previousSibling;
+                                }
+                                //var pNode = (flag === "parentNode") ? (seed[0][j].pNode ? seed[0][j].pNode : node_context.parentNode) : node_context.previousSibling;
                                 if(!pNode)
                                     continue;
 
-                                var getNode = function(elem){
+                                flag === "parentNode" ? function(){
                                     for(var t = 0;t < node.length;t++){
-                                        if(node[t].context === elem){
+                                        if(node[t].context === pNode){
+                                            var sNode = null;
+                                            sNode = pNode;
+                                            seed[0][j].pNode = sNode ? sNode : null ;
                                             s.push(seed[0][j]);
                                             return;
                                         }
                                     }
+                                }():function(){
+                                    var getNode = function(elem){
+                                        for(var t = 0;t < node.length;t++){
+                                            if(node[t].context === elem){
+                                                s.push(seed[0][j]);
+                                                return;
+                                            }
+                                        }
 
-                                    var nNode = (flag === "parentNode") ? elem.parentNode : elem.previousSibling;
-                                    if(!nNode)
-                                        return;
+                                        var nNode = elem.previousSibling;
+                                        if(!nNode)
+                                            return;
 
-                                    return getNode(nNode);
-                                };
+                                        return getNode(nNode);
+                                    };
 
-                                getNode(pNode);
+                                    getNode(pNode);
+                                }();
                             }
 
                             seed.length = 0;
                             seed.push(s);
+                            pt = type;
                         }else{
                             if(count === 0){
                                 seed.push(node);
@@ -518,7 +569,6 @@
                 if(results.length != 0 )
                     results = Selector.analysisGroup()(results);
 
-                console.log(results);
                 return results;
             };
 
