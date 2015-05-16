@@ -423,14 +423,7 @@
                     if(!this.groups || this.groups.length == 0)
                         return this;
 
-                    //var result = analysisGroup()(this.groups);
-
-                    //if(result.length == 0)
-                        //return this;
-
-                    var rets = Selector.match()(this.groups,selector);
-
-                    this.context = rets;
+                    this.context = Selector.match()(this.groups,selector);
                 }
                 console.log(this);
                 return this;
