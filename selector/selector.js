@@ -286,7 +286,7 @@
 
         var hooks = {
             val : function(){
-                if(this.context.length == 0)
+                if(!this.context || this.context.length == 0)
                     return "";
 
                 var elem = this.context;
@@ -327,46 +327,6 @@
             }
         };
 
-
-        function analysisGroup(parseOnly){
-            return function(groups){
-                var results = [];
-                var i = 0,len = groups.length;
-                for(;i<len;i++){
-                    var obj = groups[i];
-                    if(obj.length == 0) continue;
-
-                    if(!obj) continue;
-
-                    for(var x =0;x<obj.length;x++){
-                        var _obj = obj[x],type = _obj.type,value = _obj.value;
-
-                        if(!value) continue;
-                        if(type in Expr.relative) continue;
-
-                        var object = filter[type](value)() || [];
-                        if(object.length == 0) continue;
-                        if(object.length > 1){
-                            for(var j =0;j<object.length;j++){
-                                if(!Normal.isObjExsist(results,object[j])){
-                                    results.push([object[j]]);
-                                }
-                            }
-                        }else{
-                            if(!Normal.isObjExsist(results,object[0])){
-                                results.push(object);
-                            }
-                        }
-
-                        if(parseOnly) return results;
-                    }
-
-
-                }
-
-                return results;
-            }
-        }
 
         function Selector(selector){
             return (typeof selector === "function" ) ? Selector.ready(selector) : Selector.init.call(this,selector);
@@ -550,10 +510,42 @@
                        results.push(seed);
                 }
 
+                if(results.length != 0 )
+                    results = Selector.analysisGroup()(results);
+
                 console.log(results);
                 return results;
             };
 
+        };
+
+        Selector.analysisGroup = function(parseOnly){
+            return function(groups){
+                var results = [];
+                var i = 0,len = groups.length;
+                for(;i<len;i++){
+                    var obj = groups[i][0];
+                    if(obj.length == 0) continue;
+
+                    if(!obj) continue;
+
+                    for(var x =0;x<obj.length;x++){
+                        var _obj = obj[x],type = _obj.type,value = _obj.value;
+
+                        if(!value) continue;
+                        if(type in Expr.relative) continue;
+
+                        if(!Normal.isObjExsist(results,_obj)){
+                            results.push([_obj]);
+                        }
+
+                        if(parseOnly) return results;
+                    }
+
+                }
+
+                return results;
+            }
         };
 
         var filter = {
