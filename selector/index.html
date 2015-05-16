@@ -6,11 +6,8 @@
     <title></title>
     <script>
         $(function(){
-            /*var c = $("#name,#pwd").val();
-            //var c = $('#name,.cls2,div > p + .aaron[type="checkbox"], #id:first-child,input[class="cls"],#select option:selected');
-            console.log(c);*/
-            $("#name,.cls2").each(function(i,j){
-                console.log($(this).val());
+            $("div#test > p input.cls,div#test > div input.cls4").each(function(i,j){
+                $(this).val('xxxx,yyyyy');
             });
         });
         //});
@@ -18,9 +15,19 @@
 </head>
 <body>
 <div id="test">
-    <input class="cls" value="1111" id="name"><br/>
+    <div>
+        <input class="cls2" value="4444" id="title"><br/>
+        <input class="cls3" value="6666" id="psd"><br/>
+        <input class="cls3" value="7777" id="text"><br/>
+        <input class="cls4" value="8888" id="date"><br/>
+    </div>
+
+    <p>
+    <input class="cls" value="" id="name"><br/>
     <input class="cls" value="2222" id="pwd"><br/>
     <input class="cls2" value="3333" id="info">
+    </p>
+
 </div>
 </body>
 </html>
