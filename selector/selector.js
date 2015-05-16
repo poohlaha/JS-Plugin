@@ -490,6 +490,7 @@
                                 }else{
                                     pNode = node_context.previousSibling;
                                 }
+
                                 if(!pNode)
                                     continue;
 
