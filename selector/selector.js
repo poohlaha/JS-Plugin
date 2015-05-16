@@ -417,14 +417,15 @@
                     if(type in filter){
                         var node = filter[type](token.value)();
 
-                        if(flag === "parentNode"){
+                        if(flag === "parentNode" || flag === "previousSibling" ){
                             var s = [];
                             for(var j = 0;j<seed[0].length;j++){
                                 var node_context = seed[0][j].context;
-                                if(!node_context.parentNode)
+                                var pNode = (flag === "parentNode") ? node_context.parentNode : node_context.previousSibling;
+                                if(!pNode)
                                     continue;
 
-                                var getParentNode = function(elem){
+                                var getNode = function(elem){
                                     for(var t = 0;t < node.length;t++){
                                         if(node[t].context === elem){
                                             s.push(seed[0][j]);
@@ -432,44 +433,18 @@
                                         }
                                     }
 
-                                    if(!elem.parentNode)
+                                    var nNode = (flag === "parentNode") ? elem.parentNode : elem.previousSibling;
+                                    if(!nNode)
                                         return;
 
-                                    return getParentNode(elem.parentNode);
+                                    return getNode(nNode);
                                 };
 
-                                getParentNode(node_context.parentNode);
+                                getNode(pNode);
                             }
 
                             seed.length = 0;
                             seed.push(s);
-                        }else if(flag === "previousSibling"){
-                            var s = [];
-                            for(var j = 0;j<seed[0].length;j++){
-                                var node_context = seed[0][j].context;
-                                if(!node_context.previousSibling)
-                                    continue;
-
-                                var getPrevNode = function(elem){
-                                    for(var t = 0;t < node.length;t++){
-                                        if(node[t].context === elem){
-                                            s.push(seed[0][j]);
-                                            return;
-                                        }
-                                    }
-
-                                    if(!elem.previousSibling)
-                                        return;
-
-                                    return getPrevNode(elem.previousSibling);
-                                };
-
-                                getPrevNode(node_context.previousSibling);
-                            }
-
-                            seed.length = 0;
-                            seed.push(s);
-
                         }else{
                             if(count === 0){
                                 seed.push(node);
