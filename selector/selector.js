@@ -113,7 +113,7 @@
             if ( selector.charAt(0) === "<" && selector.charAt( selector.length - 1 ) === ">" && selector.length >= 3 ) {
                 // Assume that strings that start and end with <> are HTML and skip the regex check
                 var m = selector.substring(1,selector.length - 1);
-                match = [ null, null,m, null ];
+                match = [ m, null,m, null ];
             } else {
                 match = Express.expr.rquickExpr.exec(selector);
             }
@@ -284,7 +284,7 @@
 
         var Support = {
             getElementsByClassName : Normal.isNative(document.getElementsByClassName),
-            isQSA : Expr['rnative'].test(document.querySelectorAll)
+            isQSA : Normal.isNative(document.querySelectorAll)
         };
 
         var hooks = {
@@ -555,9 +555,9 @@
             return function(tokens,selector){
                 var results = [];
                 for(var i =0;i<tokens.length;i++){
-                   var seed = Selector.select()(selector,tokens[i]);
-                   if(seed.length > 0)
-                       results.push(seed);
+                    var seed = Selector.select()(selector,tokens[i]);
+                    if(seed.length > 0)
+                        results.push(seed);
                 }
 
                 if(results.length != 0 )
@@ -696,8 +696,6 @@
     }
 
     window._ = window.$ = getSelector;
-    window.Selector = getSelector;
-    window.select = Selector.match;
 })(window,document,undefined);
 
 /**
