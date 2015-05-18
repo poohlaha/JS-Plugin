@@ -422,10 +422,34 @@
 
                         if(!nextNode.nodeType || nextNode.nodeType != 1) getNextNode(nextNode);
 
-                        if(nextNode.nodeType && nextNode.nodeType === 1){
+                        if(nextNode.hasChildNodes()){
+                            var getChildNode = function (elem) {
+                                var childNodes = elem.childNodes;
+                                if(childNodes.length === 0) return;
+                                var y = 0,cLen = childNodes.length;
+                                for(;y < cLen; y++){
+                                    var cNode = childNodes[y];
+                                    while(cNode.hasChildNodes()){
+                                        getChildNode(cNode);
+                                    }
+
+                                    if(cNode.nodeType && cNode.nodeType === 1){
+                                        if(Normal.indexOf(ret,cNode)!= -1){
+                                            if(Normal.indexOf(results,cNode.context) == -1 && cNode.nodeName != "#text" && cNode.nodeName != "BR") {
+                                                results.push([{"context": cNode}]);
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+
+                            getChildNode(nextNode);
+
+                            getNextNode(nextNode);
+                        }else if(nextNode.nodeType && nextNode.nodeType === 1){
                             if(flag){
                                 if(Normal.indexOf(ret,nextNode)!= -1){
-                                    if(Normal.indexOf(results,nextNode.context) == -1) {
+                                    if(Normal.indexOf(results,nextNode.context) == -1 && nextNode.nodeName != "#text" && nextNode.nodeName != "BR") {
                                         results.push([{"context": nextNode}]);
                                         getNextNode(nextNode);
                                     }
@@ -433,7 +457,7 @@
                                     getNextNode(nextNode);
                                 }
                             }else{
-                                if(Normal.indexOf(results,nextNode.context) == -1) {
+                                if(Normal.indexOf(results,nextNode.context) == -1 && nextNode.nodeName != "#text" && nextNode.nodeName != "BR") {
                                     results.push([{"context": nextNode}]);
                                 }
                             }
