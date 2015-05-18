@@ -399,46 +399,28 @@
                     context = context[0];
                     if(!context || !context.context) continue;
 
+                    var ret = [];
                     if(flag){
                         var groups = Pizzle(value);
-                        if(!groups || groups.length === 0){
-                            this.context = null;
-                            return this;
-                        }
-
-                        var i = 0,length = groups.length,ret = [];
-                        for(;i<length;i++){
-                            var token = groups[i][0];
-                            if(!token || !token.type || !token.value) continue;
-
-                            var node = filter[token.type](token.value)();
-                            if(!node) continue;
-
-                            if(Normal.isArray(node)){
-                                if(node.length === 0){
-                                    continue;
-                                }
-
-                                for(var j = 0;j<node.length;j++){
-                                    if(!node[j].context) continue;
-                                    if(Normal.indexOf(ret,node[j].context) == -1)
-                                        ret.push(node[j].context);
-                                }
-                            }else{
-                                if(!node.context) continue;
-                                if(Normal.indexOf(ret,node.context) == -1)
-                                    ret.push(node.context);
-                            }
-                        }
-
+                        ret = Selector.match()(groups,value);
                         if(ret.length === 0) continue;
+
+                        var s = [];
+                        for(var j = 0;j<ret.length;j++){
+                            if(!ret[j][0].context) continue;
+                            if(Normal.indexOf(ret,ret[j][0].context) == -1)
+                                s.push(ret[j][0].context);
+                        }
+
+                        ret.length = 0;
+                        ret = s;
                     }
 
                     var getNextNode = function(elem){
                         var nextNode = elem.nextSibling;
-                        if(!nextNode){
-                            return;
-                        }
+                        if(!nextNode) return;
+
+                        if(!nextNode.nodeType || nextNode.nodeType != 1) getNextNode(nextNode);
 
                         if(nextNode.nodeType && nextNode.nodeType === 1){
                             if(flag){
@@ -455,37 +437,10 @@
                                     results.push([{"context": nextNode}]);
                                 }
                             }
-                        }else{
-                            getNextNode(nextNode);
                         }
                     };
 
                     getNextNode(context.context);
-
-                   /* var getNextNode = function(elem){
-                        var nextNode = elem.nextSibling;
-                        if(value){
-                            //filter[type](token.value)();
-                            if(nextNode.nodeType && nextNode.nodeType === 1 ){
-                                if(Normal.indexOf(results,nextNode.context) == -1) {
-                                    results.push([{"context": nextNode}]);
-                                }
-                            }else{
-                                getNextNode(nextNode);
-                            }
-                        }else{
-                            if(nextNode.nodeType && nextNode.nodeType === 1){
-                                if(Normal.indexOf(results,nextNode.context) == -1) {
-                                    results.push([{"context": nextNode}]);
-                                }
-                            }else{
-                                getNextNode(nextNode);
-                            }
-                        }
-
-                    };
-
-                    getNextNode(context.context);*/
                 }
 
                 this.context = results;
