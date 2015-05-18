@@ -424,7 +424,6 @@
                 for(var y = 0;y < len;y++){
                     var context = contexts[y];
                     if(!context[0]) continue;
-
                     context = context[0];
                     if(!context || !context.context) continue;
                     if(Normal.indexOf(c,context.context) == -1)
@@ -435,7 +434,6 @@
                     this.context = [];
                     return this;
                 }
-
 
                 var results = [],i = 0;
                 for(;i<ret.length;i++){
@@ -456,14 +454,11 @@
 
                     var pNode = elemNode.parentNode;
                     if(!pNode) continue;
-
                     getParentNode(pNode);
                 }
 
                 this.context = results;
-
                 return this;
-
             }
         };
 
