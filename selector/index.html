@@ -6,27 +6,37 @@
     <title></title>
     <script>
         $(function(){
-            $("div#test > p input.cls,div#test > div input.cls4").each(function(i,j){
-                $(this).val('xxxx,yyyyy');
+            $("div#test > p").next("div .cls4").each(function(){
+                $(this).val("dadasd");
             });
         });
     </script>
 </head>
 <body>
 <div id="test">
-    <div>
+    <p>
+        <input class="cls" value="1111" id="name"><br/>
+        <input class="cls" value="2222" id="pwd"><br/>
+        <input class="cls2" value="3333" id="info">
+    </p>
+
+    <div id = "test2">
         <input class="cls2" value="4444" id="title"><br/>
         <input class="cls3" value="6666" id="psd"><br/>
         <input class="cls3" value="7777" id="text"><br/>
         <input class="cls4" value="8888" id="date"><br/>
+        <span id="testx">
+            <input class="cls4" value="0000" id="datse"><br/>
+            <input class="cls4" value="1000" id="sdesd"><br/>
+        </span>
+
+        <span if="testy">
+            <input class="cls4" value="2000" id="indtd"><br/>
+            <input class="cls4" value="3000" id="tetsd">
+        </span>
     </div>
 
-    <p>
-    <input class="cls" value="" id="name"><br/>
-    <input class="cls" value="2222" id="pwd"><br/>
-    <input class="cls2" value="3333" id="info">
-    </p>
-
+    <input class = "cls5" value="9999" id="teste"/>
 </div>
 </body>
 </html>
