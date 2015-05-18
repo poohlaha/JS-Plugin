@@ -422,7 +422,7 @@
 
                         if(!nextNode.nodeType || nextNode.nodeType != 1) getNextNode(nextNode);
 
-                        if(nextNode.hasChildNodes()){
+                        nextNode.hasChildNodes()? function(){
                             var getChildNode = function (elem) {
                                 var childNodes = elem.childNodes;
                                 if(childNodes.length === 0) return;
@@ -444,24 +444,23 @@
                             };
 
                             getChildNode(nextNode);
-
                             getNextNode(nextNode);
-                        }else if(nextNode.nodeType && nextNode.nodeType === 1){
-                            if(flag){
-                                if(Normal.indexOf(ret,nextNode)!= -1){
+                        }():function(){
+                            if(nextNode.nodeType && nextNode.nodeType === 1){
+                                flag === true ? function(){
+                                    Normal.indexOf(ret,nextNode)!= -1 ? function(){
+                                        if(Normal.indexOf(results,nextNode.context) == -1 && nextNode.nodeName != "#text" && nextNode.nodeName != "BR") {
+                                            results.push([{"context": nextNode}]);
+                                            getNextNode(nextNode);
+                                        }
+                                    }(): getNextNode(nextNode);
+                                }():function(){
                                     if(Normal.indexOf(results,nextNode.context) == -1 && nextNode.nodeName != "#text" && nextNode.nodeName != "BR") {
                                         results.push([{"context": nextNode}]);
-                                        getNextNode(nextNode);
                                     }
-                                }else{
-                                    getNextNode(nextNode);
-                                }
-                            }else{
-                                if(Normal.indexOf(results,nextNode.context) == -1 && nextNode.nodeName != "#text" && nextNode.nodeName != "BR") {
-                                    results.push([{"context": nextNode}]);
-                                }
+                                }();
                             }
-                        }
+                        }();
                     };
 
                     getNextNode(context.context);
