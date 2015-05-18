@@ -389,12 +389,87 @@
 
             prev:function(value){
                 return Normal.getNextOrPrevNode.call(this,"prev",value);
+            },
+
+            find:function(value){
+                if(!this.context || this.context.length == 0 || !value){
+                    this.context = [];
+                    return this;
+                }
+
+                var groups = Pizzle(value);
+                var ret = Selector.match()(groups,value);
+
+                if(ret.length === 0){
+                    this.context = [];
+                    return this;
+                }
+
+                var s = [],i;
+                for(var x = 0;x < ret.length;x++){
+                    if(!ret[x][0].context) continue;
+                    if(Normal.indexOf(s,ret[x][0].context) == -1)
+                        s.push(ret[x][0].context);
+                }
+
+                ret.length = 0;
+                ret = s;
+
+                if(ret.length === 0){
+                    this.context = [];
+                    return this;
+                }
+
+                var contexts = this.context,len = contexts.length,c = [];
+                for(var y = 0;y < len;y++){
+                    var context = contexts[y];
+                    if(!context[0]) continue;
+
+                    context = context[0];
+                    if(!context || !context.context) continue;
+                    if(Normal.indexOf(c,context.context) == -1)
+                        c.push(context.context);
+                }
+
+                if(c.length === 0){
+                    this.context = [];
+                    return this;
+                }
+
+
+                var results = [],i = 0;
+                for(;i<ret.length;i++){
+                    var elemNode = ret[i];
+                    var getParentNode = function(elem){
+                        for(var x = 0;x<c.length;x++){
+                            var node = c[x];
+                            if(elem === node){
+                                if(!Normal.isObjExsist(results,{"context":elemNode}))
+                                    results.push([{"context": elemNode}]);
+                            }
+                        }
+
+                        var _pNode = elem.parentNode;
+                        if(!_pNode) return;
+                        getParentNode(_pNode);
+                    };
+
+                    var pNode = elemNode.parentNode;
+                    if(!pNode) continue;
+
+                    getParentNode(pNode);
+                }
+
+                this.context = results;
+
+                return this;
+
             }
         };
 
         Normal.getNextOrPrevNode = function(cur,value){
             if(!this.context || this.context.length == 0){
-                this.context = null;
+                this.context = [];
                 return this;
             }
 
@@ -542,6 +617,7 @@
 
         Selector.prototype.next = hooks.next;
         Selector.prototype.prev = hooks.prev;
+        Selector.prototype.find = hooks.find;
 
         Selector.select = function(){
             return function(selector,tokens){
