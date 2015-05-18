@@ -459,6 +459,48 @@
 
                 this.context = results;
                 return this;
+            },
+
+            data:function(key,value){
+                if(!key || typeof key != "string") return;
+                if(typeof value == "function") return;
+
+                key = key.trim();
+                if(typeof value == "string")
+                    value = value.trim;
+
+                var data  = this.data || [];
+                var flag = 0;
+                for(var i=0;i<data.length;i++){
+                    var obj = data[i];
+                    if(obj.key === key){
+                        obj.value = value;
+                        flag = 1;
+                    }
+                }
+
+                if(flag === 0){
+                    data.push({
+                        "key":key,
+                        "value":value
+                    });
+                }
+
+                this.data = data;
+                return this;
+            },
+
+            getData:function(key){
+                if(!this.data || this.data.length === 0) return null;
+                var data  = this.data || [];
+                for(var i=0;i<data.length;i++){
+                    var obj = data[i];
+                    if(obj.key === key){
+                        return obj.value;
+                    }
+                }
+
+                return null;
             }
         };
 
@@ -613,6 +655,8 @@
         Selector.prototype.next = hooks.next;
         Selector.prototype.prev = hooks.prev;
         Selector.prototype.find = hooks.find;
+        Selector.prototype.data = hooks.data;
+        Selector.prototype.getData = hooks.getData;
 
         Selector.select = function(){
             return function(selector,tokens){
