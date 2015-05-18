@@ -381,6 +381,115 @@
                 }
 
                 return obj;
+            },
+
+            next:function(value){
+                if(!this.context || this.context.length == 0){
+                    this.context = null;
+                    return this;
+                }
+
+                var flag = value ? true : false;
+
+                var x = 0,results = [],contexts = this.context,len = contexts.length;
+                for(;x<len;x++){
+                    var context = contexts[x];
+                    if(!context[0]) continue;
+
+                    context = context[0];
+                    if(!context || !context.context) continue;
+
+                    if(flag){
+                        var groups = Pizzle(value);
+                        if(!groups || groups.length === 0){
+                            this.context = null;
+                            return this;
+                        }
+
+                        var i = 0,length = groups.length,ret = [];
+                        for(;i<length;i++){
+                            var token = groups[i][0];
+                            if(!token || !token.type || !token.value) continue;
+
+                            var node = filter[token.type](token.value)();
+                            if(!node) continue;
+
+                            if(Normal.isArray(node)){
+                                if(node.length === 0){
+                                    continue;
+                                }
+
+                                for(var j = 0;j<node.length;j++){
+                                    if(!node[j].context) continue;
+                                    if(Normal.indexOf(ret,node[j].context) == -1)
+                                        ret.push(node[j].context);
+                                }
+                            }else{
+                                if(!node.context) continue;
+                                if(Normal.indexOf(ret,node.context) == -1)
+                                    ret.push(node.context);
+                            }
+                        }
+
+                        if(ret.length === 0) continue;
+                    }
+
+                    var getNextNode = function(elem){
+                        var nextNode = elem.nextSibling;
+                        if(!nextNode){
+                            return;
+                        }
+
+                        if(nextNode.nodeType && nextNode.nodeType === 1){
+                            if(flag){
+                                if(Normal.indexOf(ret,nextNode)!= -1){
+                                    if(Normal.indexOf(results,nextNode.context) == -1) {
+                                        results.push([{"context": nextNode}]);
+                                        getNextNode(nextNode);
+                                    }
+                                }else{
+                                    getNextNode(nextNode);
+                                }
+                            }else{
+                                if(Normal.indexOf(results,nextNode.context) == -1) {
+                                    results.push([{"context": nextNode}]);
+                                }
+                            }
+                        }else{
+                            getNextNode(nextNode);
+                        }
+                    };
+
+                    getNextNode(context.context);
+
+                   /* var getNextNode = function(elem){
+                        var nextNode = elem.nextSibling;
+                        if(value){
+                            //filter[type](token.value)();
+                            if(nextNode.nodeType && nextNode.nodeType === 1 ){
+                                if(Normal.indexOf(results,nextNode.context) == -1) {
+                                    results.push([{"context": nextNode}]);
+                                }
+                            }else{
+                                getNextNode(nextNode);
+                            }
+                        }else{
+                            if(nextNode.nodeType && nextNode.nodeType === 1){
+                                if(Normal.indexOf(results,nextNode.context) == -1) {
+                                    results.push([{"context": nextNode}]);
+                                }
+                            }else{
+                                getNextNode(nextNode);
+                            }
+                        }
+
+                    };
+
+                    getNextNode(context.context);*/
+                }
+
+                this.context = results;
+                return this;
             }
         };
 
@@ -445,6 +554,8 @@
         Selector.prototype.each = function(callback,args){
             return hooks.each(this.context,callback,args);
         };
+
+        Selector.prototype.next = hooks.next;
 
         Selector.select = function(){
             return function(selector,tokens){
