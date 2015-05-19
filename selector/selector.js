@@ -301,14 +301,15 @@
             },
 
             data:function(elem,name,data){
-                var ret,thisCache,isNode = elem.nodeType,cache = isNode?Selector.cache:elem,key = "data",elemKey = "node",nodes = [];
+                var ret,thisCache,isNode = elem.nodeType,cache = isNode?Selector.cache:elem,key = "data",elemKey = "node";
 
                 cache[name] = Selector.cache[name] || {};
                 thisCache = cache[name];
                 if(data!=undefined){
                     thisCache[key] = data;
-                    nodes.push(elem);
-                    thisCache[elemKey] = nodes;
+                    thisCache[elemKey] = thisCache[elemKey] || [];
+                    if(Selector.indexOf(thisCache[elemKey],elem) == -1)
+                        thisCache[elemKey].push(elem);
                 }
 
                 if(typeof name === "string" && Selector.indexOf(thisCache[elemKey],elem)!=-1) {
