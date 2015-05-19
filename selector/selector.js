@@ -70,6 +70,7 @@
         };
 
         Selector.extend({
+            cache:{},
             Expr :{
                 whitespace : "[\\x20\\t\\r\\n\\f]",//空白字符正则字符串
                 rnative : /^[^{]+\{\s*\[native code/,//原生函数正则
@@ -83,6 +84,11 @@
                     " ": { dir: "parentNode" },
                     "+": { dir: "previousSibling", first: true },
                     "~": { dir: "previousSibling" }
+                },
+                rbrace:/^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
+                rvalidtokens:/(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g,
+                rtrim:function(){
+                    return new RegExp( "^" + Selector.Expr.whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + Selector.Expr.whitespace + "+$", "g" );
                 }
             },
 
@@ -179,6 +185,10 @@
         });
 
         Selector.extend({
+            error:function(message){
+                throw new Error(message);
+            },
+
             isArray : function(obj){
                 if(!obj.length)
                     return false;
@@ -288,13 +298,98 @@
                 }
 
                 return obj;
+            },
+
+            data:function(elem,name,data){
+                var ret,thisCache,isNode = elem.nodeType,cache = isNode?Selector.cache:elem,key = "data",elemKey = "node",nodes = [];
+
+                cache[name] = Selector.cache[name] || {};
+                thisCache = cache[name];
+                if(data!=undefined){
+                    thisCache[key] = data;
+                    nodes.push(elem);
+                    thisCache[elemKey] = nodes;
+                }
+
+                if(typeof name === "string" && Selector.indexOf(thisCache[elemKey],elem)!=-1) {
+                    ret = thisCache[key];
+                    if (ret == null) {
+                        ret = thisCache[key];
+                    } else {
+                        ret = thisCache;
+                    }
+                }
+                return ret;
+            },
+
+            trim: function( text ) {
+                return text == null ?
+                    "" :
+                    ( text + "" ).replace( Selector.Expr.rtrim(), "" );
+            },
+
+            parseJSON:function(data){
+                if ( window.JSON && window.JSON.parse ) {
+                    return window.JSON.parse( data + "" );
+                }
+
+                var requireNonComma,
+                    depth = null,
+                    str = jQuery.trim( data + "" );
+
+                return str && !Selector.trim( str.replace( Selector.Expr.rvalidtokens, function( token, comma, open, close ) {
+                    if ( requireNonComma && comma ) {
+                        depth = 0;
+                    }
+
+                    if ( depth === 0 ) {
+                        return token;
+                    }
+
+                    // Commas must not follow "[", "{", or ","
+                    requireNonComma = open || comma;
+
+                    // Determine new depth
+                    // array/object open ("[" or "{"): depth += true - false (increment)
+                    // array/object close ("]" or "}"): depth += false - true (decrement)
+                    // other cases ("," or primitive): depth += true - true (numeric cast)
+                    depth += !close - !open;
+
+                    // Remove this token
+                    return "";
+                }) ) ?
+                    ( Function( "return " + str ) )() :
+                    Selector.error( "Invalid JSON: " + data );
+            },
+
+            dataAttr:function(elem,key,data){
+                if ( data === undefined && elem.nodeType === 1 ) {
+                    var name = "data-"+key;
+                    data = elem.getAttribute(name);
+
+                    if(typeof data === "string"){
+                        try{
+                            data = data === "true" ? true :
+                                data === "false" ? false :
+                                    data === "null" ? null :
+                                        // Only convert to a number if it doesn't change the string
+                                        +data + "" === data ? +data :
+                                            Selector.Expr.rbrace.test( data ) ? jQuery.parseJSON( data ) :
+                                                data;
+                        }catch (e){}
+                    }else{
+                        data = undefined;
+                    }
+                }else{
+                    data = data["data"];
+                }
+                return data;
             }
         });
 
 
         Selector.fn.extend({
             val : function(value){
-
                 if(!this.context || this.context.length == 0){
                     if(value != undefined ) return ;
                     else return "";
@@ -438,6 +533,19 @@
             },
 
             data:function(key,value){
+                if(!key || typeof key !== "string") return;
+
+                var elem = this.context[0];
+                if(value){
+                    if(typeof value === "function")
+                        return;
+                }
+
+
+                return arguments.length > 1?
+                    this.each(function(){
+                        Selector.data(this.context,key,value);
+                    }) : (elem ? Selector.dataAttr(elem[0].context,key,Selector.data(elem[0].context,key)):undefined)
 
             }
         });
