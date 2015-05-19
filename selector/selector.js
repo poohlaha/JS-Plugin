@@ -211,7 +211,6 @@
 
 
     var Selector = (function(Pizzle){
-
         var Normal = {
             isArray : function(obj){
                 if(!obj.length)
@@ -261,6 +260,27 @@
                 }
 
                 return false;
+            },
+
+            isPlainObject:function(obj){
+                var key;
+                if ( !obj || typeof obj !== "object" || obj.nodeType || jQuery.isWindow( obj ) ) {
+                    return false;
+                }
+
+                try {
+                    if ( obj.constructor && !obj.hasOwnProperty("constructor") && obj.constructor.prototype.hasOwnProperty("isPrototypeOf")) {
+                        return false;
+                    }
+                } catch ( e ) {
+                    return false;
+                }
+
+                for ( key in obj ) {
+                    return obj.hasOwnProperty(key);
+                }
+                //for ( key in obj ) {}
+                return key === undefined || obj.hasOwnProperty(key);
             }
 
 
@@ -288,68 +308,7 @@
         };
 
         var hooks = {
-            val : function(value){
 
-                if(!this.context || this.context.length == 0){
-                    if(value != undefined ) return ;
-                    else return "";
-                }
-
-                var elem = this.context;
-                elem = (elem.type && elem.nodeType === 1)? elem : function(){
-                    if(Normal.isArray(elem)){
-                        var results = [];
-                        for(var i = 0;i<elem.length;i++){
-                            var obj = elem[i];
-                            if(!obj[0] || !obj[0].context) continue;
-                            var type = obj[0].type;
-                            if(type in Expr.relative) continue;
-
-                            if(Normal.indexOf(results,obj[0].context) == -1){
-                                results.push(obj[0].context);
-                            }
-                        }
-
-                        return results;
-                    }else{
-                        return elem[0] ? ( elem[0].context ? (elem[0].context) : null ) : null;
-                    }
-
-                }();
-
-                if(!elem || elem.length === 0){
-                    if(value != undefined ) return ;
-                    else return "";
-                }
-
-                if(value!= undefined){
-                    (Normal.isArray(elem) === true)?function(){
-                        for(var j =0;j<elem.length;j++){
-                            var obj = elem[j];
-                            (typeof value == "string" && value.constructor== String) ? obj.value = value : ( Normal.isArray(value) === true ? function(){
-                                var str = "";
-                                for(var x = 0;x<value.length;x++){
-                                    if(value[x]){
-                                        (x != value.length - 1) ? str = str + value[x] + ",":str = str + value[x];
-                                    }
-                                }
-                                obj.value = str;
-                            }(): obj.value = value);
-                        }
-                    }():elem.value = value;
-                }else{
-                    var ret = (Normal.isArray(elem) === true)?function(){
-                        for(var j =0;j<elem.length;j++){
-                            var obj = elem[j];
-                            ret = obj.value;
-                            if(ret != undefined) return ret;
-                        }
-                    }():elem.value;
-
-                    return ret ? ((typeof ret === "string") ? ret : "") : "";
-                }
-
-            },
 
             each:function(obj,callback,args){
                 var value,i = 0,length = obj.length;
@@ -381,126 +340,6 @@
                 }
 
                 return obj;
-            },
-
-            next:function(value){
-                return Normal.getNextOrPrevNode.call(this,"next",value);
-            },
-
-            prev:function(value){
-                return Normal.getNextOrPrevNode.call(this,"prev",value);
-            },
-
-            find:function(value){
-                if(!this.context || this.context.length == 0 || !value){
-                    this.context = [];
-                    return this;
-                }
-
-                var groups = Pizzle(value);
-                var ret = Selector.match()(groups,value);
-
-                if(ret.length === 0){
-                    this.context = [];
-                    return this;
-                }
-
-                var s = [],i;
-                for(var x = 0;x < ret.length;x++){
-                    if(!ret[x][0].context) continue;
-                    if(Normal.indexOf(s,ret[x][0].context) == -1)
-                        s.push(ret[x][0].context);
-                }
-
-                ret.length = 0;
-                ret = s;
-
-                if(ret.length === 0){
-                    this.context = [];
-                    return this;
-                }
-
-                var contexts = this.context,len = contexts.length,c = [];
-                for(var y = 0;y < len;y++){
-                    var context = contexts[y];
-                    if(!context[0]) continue;
-                    context = context[0];
-                    if(!context || !context.context) continue;
-                    if(Normal.indexOf(c,context.context) == -1)
-                        c.push(context.context);
-                }
-
-                if(c.length === 0){
-                    this.context = [];
-                    return this;
-                }
-
-                var results = [],i = 0;
-                for(;i<ret.length;i++){
-                    var elemNode = ret[i];
-                    var getParentNode = function(elem){
-                        for(var x = 0;x<c.length;x++){
-                            var node = c[x];
-                            if(elem === node){
-                                if(!Normal.isObjExsist(results,{"context":elemNode}))
-                                    results.push([{"context": elemNode}]);
-                            }
-                        }
-
-                        var _pNode = elem.parentNode;
-                        if(!_pNode) return;
-                        getParentNode(_pNode);
-                    };
-
-                    var pNode = elemNode.parentNode;
-                    if(!pNode) continue;
-                    getParentNode(pNode);
-                }
-
-                this.context = results;
-                return this;
-            },
-
-            data:function(key,value){
-                if(!key || typeof key != "string") return;
-                if(typeof value == "function") return;
-
-                key = key.trim();
-                if(typeof value == "string")
-                    value = value.trim;
-
-                var data  = this.data || [];
-                var flag = 0;
-                for(var i=0;i<data.length;i++){
-                    var obj = data[i];
-                    if(obj.key === key){
-                        obj.value = value;
-                        flag = 1;
-                    }
-                }
-
-                if(flag === 0){
-                    data.push({
-                        "key":key,
-                        "value":value
-                    });
-                }
-
-                this.data = data;
-                return this;
-            },
-
-            getData:function(key){
-                if(!this.data || this.data.length === 0) return null;
-                var data  = this.data || [];
-                for(var i=0;i<data.length;i++){
-                    var obj = data[i];
-                    if(obj.key === key){
-                        return obj.value;
-                    }
-                }
-
-                return null;
             }
         };
 
@@ -647,16 +486,213 @@
 
         };
 
-        Selector.prototype.val = hooks.val;
-        Selector.prototype.each = function(callback,args){
-            return hooks.each(this.context,callback,args);
+        Selector.fn = Selector.prototype = {
+
         };
 
-        Selector.prototype.next = hooks.next;
-        Selector.prototype.prev = hooks.prev;
-        Selector.prototype.find = hooks.find;
-        Selector.prototype.data = hooks.data;
-        Selector.prototype.getData = hooks.getData;
+        Selector.extend = Selector.fn.extend = function(){
+            //target被扩展的对象,length参数的数量,deep是否深度操作
+            var options,name,src,copy,copyIsArray,clone,target = arguments[0] || {},
+                i = 1,length = arguments.length,deep = false;
+
+            //target为第一个参数，如果第一个参数是Boolean类型的值，则把target赋值给deep
+            //deep表示是否进行深层面的复制，当为true时，进行深度复制，否则只进行第一层扩展,然后把第二个参数赋值给target
+            if(typeof target === "boolean"){
+                deep = target;
+                target = arguments[1] || {};
+                i = 2;// 将i赋值为2，跳过前两个参数
+            }
+
+            // target既不是对象也不是函数则把target设置为空对象。
+            if(typeof target !== "object" && typeof target !=="function"){
+                target = {};
+            }
+
+            // 如果只有一个参数，则把对象赋值给target
+            if(length === i){
+                target = this;
+                // i减1，指向被扩展对象
+                --i;
+            }
+
+            // 开始遍历需要被扩展到target上的参数
+            for(;i<length;i++){
+                // 处理第i个被扩展的对象，即除去deep和target之外的对象
+                if((options = arguments[i])!=null ){
+                    // 遍历第i个对象的所有可遍历的属性
+                    for(name in options){
+                        src = target[name];// 根据被扩展对象的键获得目标对象相应值，并赋值给src
+                        copy = options[name];// 得到被扩展对象的值
+                        if ( target === copy ) continue;
+
+                        // 当用户想要深度操作时，递归合并,copy是纯对象或者是数组
+                        if ( deep && copy && ( Normal.isPlainObject(copy) || (copyIsArray = Normal.isArray(copy)) ) ) {
+                            if ( copyIsArray ) {
+                                copyIsArray = false;// 将copyIsArray重新设置为false，为下次遍历做准备。
+                                clone = src && Normal.isArray(src) ? src : [];// 判断被扩展的对象中src是不是数组
+                            }else{
+                                clone = src && Normal.isPlainObject(src) ? src : {};//// 判断被扩展的对象中src是不是纯对象
+                            }
+                        }else if ( copy !== undefined ){// 如果不需要深度复制，则直接把copy（第i个被扩展对象中被遍历的那个键的值）
+                            target[ name ] = copy;
+                        }
+                    }
+                }
+            }
+
+            return target;// 原对象被改变，因此如果不想改变原对象，target可传入{}
+        };
+
+        Selector.fn.extend({
+            val : function(value){
+
+                if(!this.context || this.context.length == 0){
+                    if(value != undefined ) return ;
+                    else return "";
+                }
+
+                var elem = this.context;
+                elem = (elem.type && elem.nodeType === 1)? elem : function(){
+                    if(Normal.isArray(elem)){
+                        var results = [];
+                        for(var i = 0;i<elem.length;i++){
+                            var obj = elem[i];
+                            if(!obj[0] || !obj[0].context) continue;
+                            var type = obj[0].type;
+                            if(type in Expr.relative) continue;
+
+                            if(Normal.indexOf(results,obj[0].context) == -1){
+                                results.push(obj[0].context);
+                            }
+                        }
+
+                        return results;
+                    }else{
+                        return elem[0] ? ( elem[0].context ? (elem[0].context) : null ) : null;
+                    }
+
+                }();
+
+                if(!elem || elem.length === 0){
+                    if(value != undefined ) return ;
+                    else return "";
+                }
+
+                if(value!= undefined){
+                    (Normal.isArray(elem) === true)?function(){
+                        for(var j =0;j<elem.length;j++){
+                            var obj = elem[j];
+                            (typeof value == "string" && value.constructor== String) ? obj.value = value : ( Normal.isArray(value) === true ? function(){
+                                var str = "";
+                                for(var x = 0;x<value.length;x++){
+                                    if(value[x]){
+                                        (x != value.length - 1) ? str = str + value[x] + ",":str = str + value[x];
+                                    }
+                                }
+                                obj.value = str;
+                            }(): obj.value = value);
+                        }
+                    }():elem.value = value;
+                }else{
+                    var ret = (Normal.isArray(elem) === true)?function(){
+                        for(var j =0;j<elem.length;j++){
+                            var obj = elem[j];
+                            ret = obj.value;
+                            if(ret != undefined) return ret;
+                        }
+                    }():elem.value;
+
+                    return ret ? ((typeof ret === "string") ? ret : "") : "";
+                }
+
+            },
+
+            each:function(callback,args){
+                return hooks.each(this.context,callback,args);
+            },
+            next:function(value){
+                return Normal.getNextOrPrevNode.call(this,"next",value);
+            },
+
+            prev:function(value){
+                return Normal.getNextOrPrevNode.call(this,"prev",value);
+            },
+
+            find:function(value){
+                if(!this.context || this.context.length == 0 || !value){
+                    this.context = [];
+                    return this;
+                }
+
+                var groups = Pizzle(value);
+                var ret = Selector.match()(groups,value);
+
+                if(ret.length === 0){
+                    this.context = [];
+                    return this;
+                }
+
+                var s = [];
+                for(var x = 0;x < ret.length;x++){
+                    if(!ret[x][0].context) continue;
+                    if(Normal.indexOf(s,ret[x][0].context) == -1)
+                        s.push(ret[x][0].context);
+                }
+
+                ret.length = 0;
+                ret = s;
+
+                if(ret.length === 0){
+                    this.context = [];
+                    return this;
+                }
+
+                var contexts = this.context,len = contexts.length,c = [];
+                for(var y = 0;y < len;y++){
+                    var context = contexts[y];
+                    if(!context[0]) continue;
+                    context = context[0];
+                    if(!context || !context.context) continue;
+                    if(Normal.indexOf(c,context.context) == -1)
+                        c.push(context.context);
+                }
+
+                if(c.length === 0){
+                    this.context = [];
+                    return this;
+                }
+
+                var results = [],i = 0;
+                for(;i<ret.length;i++){
+                    var elemNode = ret[i];
+                    var getParentNode = function(elem){
+                        for(var x = 0;x<c.length;x++){
+                            var node = c[x];
+                            if(elem === node){
+                                if(!Normal.isObjExsist(results,{"context":elemNode}))
+                                    results.push([{"context": elemNode}]);
+                            }
+                        }
+
+                        var _pNode = elem.parentNode;
+                        if(!_pNode) return;
+                        getParentNode(_pNode);
+                    };
+
+                    var pNode = elemNode.parentNode;
+                    if(!pNode) continue;
+                    getParentNode(pNode);
+                }
+
+                this.context = results;
+                return this;
+            },
+
+            data:function(key,value){
+               
+            }
+        });
+
 
         Selector.select = function(){
             return function(selector,tokens){
