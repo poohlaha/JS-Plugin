@@ -1,135 +1,5 @@
 (function(window,document,undefined,Pizzle){
     var Selector = (function(Pizzle){
-        var Normal = {
-            isArray : function(obj){
-                if(!obj.length)
-                    return false;
-
-                var length = "length" in obj && obj.length;
-
-                if(typeof obj === "function"){
-                    return false;
-                }
-
-                if(obj.nodeType === 1 && length)
-                    return true;
-
-                return typeof obj === "array" || length === 0 ||
-                    typeof length === "number" && length > 0 && (length - 1) in obj;
-
-            },
-
-            isNative:function(fn){
-                return Expr.rnative.test(fn + "");
-            },
-
-            indexOf : function(arr,elem){
-                if(!Normal.isArray(arr))
-                    return -1;
-
-                var i = 0,len = arr.length;
-                for(;i<len;i++){
-                    if(arr[i] === elem){
-                        return i;
-                    }
-                }
-                return -1;
-            },
-
-            isObjExsist : function(arr,elem){
-                if(arr.length === 0){
-                    return false;
-                }
-
-                for(var i = 0;i<arr.length;i++){
-                    var obj = arr[i][0].context;
-                    if(obj === elem.context){
-                        return true;
-                    }
-                }
-
-                return false;
-            },
-
-            isPlainObject:function(obj){
-                var key;
-                if ( !obj || typeof obj !== "object" || obj.nodeType || jQuery.isWindow( obj ) ) {
-                    return false;
-                }
-
-                try {
-                    if ( obj.constructor && !obj.hasOwnProperty("constructor") && obj.constructor.prototype.hasOwnProperty("isPrototypeOf")) {
-                        return false;
-                    }
-                } catch ( e ) {
-                    return false;
-                }
-
-                for ( key in obj ) {
-                    return obj.hasOwnProperty(key);
-                }
-                //for ( key in obj ) {}
-                return key === undefined || obj.hasOwnProperty(key);
-            }
-
-
-        };
-
-        var Expr = {
-            whitespace : "[\\x20\\t\\r\\n\\f]",//空白字符正则字符串
-            rnative : /^[^{]+\{\s*\[native code/,//原生函数正则
-            rsibling : /[\x20\t\r\n\f]*[+~]/, //弟兄正则
-            needsContext:function(){//开始为>+~或位置伪类，如果选择器中有位置伪类解析从左往右
-                return new RegExp( "^" + Expr.whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" +
-                Expr.whitespace + "*((?:-\\d)?\\d*)" + Expr.whitespace + "*\\)|)(?=[^-]|$)", "i" );
-            },
-            relative:{
-                ">": { dir: "parentNode", first: true },
-                " ": { dir: "parentNode" },
-                "+": { dir: "previousSibling", first: true },
-                "~": { dir: "previousSibling" }
-            }
-        };
-
-        var Support = {
-            getElementsByClassName : Normal.isNative(document.getElementsByClassName),
-            isQSA : Normal.isNative(document.querySelectorAll)
-        };
-
-        var hooks = {
-            each:function(obj,callback,args){
-                var value,i = 0,length = obj.length;
-                var isArray = Normal.isArray(obj);
-                if(args){
-                    if(isArray){
-                        for(;i < length ; i++){
-                            value = callback.apply(obj[i][0],args);
-                            if(value === false)  break;
-                        }
-                    }else{
-                        for(i in obj){
-                            value = callback.apply(obj[i][0],args);
-                            if(value === false)  break;
-                        }
-                    }
-                }else{
-                    if(isArray){
-                        for(;i<length;i++){
-                            value = callback.call(obj[i][0], i, obj[i][0].context);
-                            if (value === false)  break;
-                        }
-                    }else{
-                        for(i in obj){
-                            value = callback.call(obj[i][0], i, obj[i][0].context);
-                            if (value === false)  break;
-                        }
-                    }
-                }
-
-                return obj;
-            }
-        };
-
         function Selector(selector){
             return (typeof selector === "function" ) ? Selector.ready(selector) : Selector.init.call(this,selector);
         }
@@ -182,12 +52,12 @@
                         if ( target === copy ) continue;
 
                         // 当用户想要深度操作时，递归合并,copy是纯对象或者是数组
-                        if ( deep && copy && ( Normal.isPlainObject(copy) || (copyIsArray = Normal.isArray(copy)) ) ) {
+                        if ( deep && copy && ( Selector.isPlainObject(copy) || (copyIsArray = Selector.isArray(copy)) ) ) {
                             if ( copyIsArray ) {
                                 copyIsArray = false;// 将copyIsArray重新设置为false，为下次遍历做准备。
-                                clone = src && Normal.isArray(src) ? src : [];// 判断被扩展的对象中src是不是数组
+                                clone = src && Selector.isArray(src) ? src : [];// 判断被扩展的对象中src是不是数组
                             }else{
-                                clone = src && Normal.isPlainObject(src) ? src : {};//// 判断被扩展的对象中src是不是纯对象
+                                clone = src && Selector.isPlainObject(src) ? src : {};//// 判断被扩展的对象中src是不是纯对象
                             }
                         }else if ( copy !== undefined ){// 如果不需要深度复制，则直接把copy（第i个被扩展对象中被遍历的那个键的值）
                             target[ name ] = copy;
@@ -197,6 +67,140 @@
             }
 
             return target;// 原对象被改变，因此如果不想改变原对象，target可传入{}
+        };
+
+        Selector.extend({
+            Expr :{
+                whitespace : "[\\x20\\t\\r\\n\\f]",//空白字符正则字符串
+                rnative : /^[^{]+\{\s*\[native code/,//原生函数正则
+                rsibling : /[\x20\t\r\n\f]*[+~]/, //弟兄正则
+                needsContext:function(){//开始为>+~或位置伪类，如果选择器中有位置伪类解析从左往右
+                    return new RegExp( "^" + Selector.Expr.whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" +
+                    Selector.Expr.whitespace + "*((?:-\\d)?\\d*)" + Selector.Expr.whitespace + "*\\)|)(?=[^-]|$)", "i" );
+                },
+                relative:{
+                    ">": { dir: "parentNode", first: true },
+                    " ": { dir: "parentNode" },
+                    "+": { dir: "previousSibling", first: true },
+                    "~": { dir: "previousSibling" }
+                }
+            }
+
+        });
+
+        Selector.extend({
+            isArray : function(obj){
+                if(!obj.length)
+                    return false;
+
+                var length = "length" in obj && obj.length;
+
+                if(typeof obj === "function"){
+                    return false;
+                }
+
+                if(obj.nodeType === 1 && length)
+                    return true;
+
+                return typeof obj === "array" || length === 0 ||
+                    typeof length === "number" && length > 0 && (length - 1) in obj;
+
+            },
+
+            isNative:function(fn){
+                return Selector.Expr.rnative.test(fn + "");
+            },
+
+            indexOf : function(arr,elem){
+                if(!Selector.isArray(arr))
+                    return -1;
+
+                var i = 0,len = arr.length;
+                for(;i<len;i++){
+                    if(arr[i] === elem){
+                        return i;
+                    }
+                }
+                return -1;
+            },
+
+            isObjExsist : function(arr,elem){
+                if(arr.length === 0){
+                    return false;
+                }
+
+                for(var i = 0;i<arr.length;i++){
+                    var obj = arr[i][0].context;
+                    if(obj === elem.context){
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+
+            isPlainObject:function(obj){
+                var key;
+                if ( !obj || typeof obj !== "object" || obj.nodeType || jQuery.isWindow( obj ) ) {
+                    return false;
+                }
+
+                try {
+                    if ( obj.constructor && !obj.hasOwnProperty("constructor") && obj.constructor.prototype.hasOwnProperty("isPrototypeOf")) {
+                        return false;
+                    }
+                } catch ( e ) {
+                    return false;
+                }
+
+                for ( key in obj ) {
+                    return obj.hasOwnProperty(key);
+                }
+                //for ( key in obj ) {}
+                return key === undefined || obj.hasOwnProperty(key);
+            },
+
+            isSupportGetClsName:function(){
+                return Selector.isNative(document.getElementsByClassName);
+            },
+
+            isQSA:function(){
+                return Selector.isNative(document.querySelectorAll);
+            }
+        });
+
+        var hooks = {
+            each:function(obj,callback,args){
+                var value,i = 0,length = obj.length;
+                var isArray = Selector.isArray(obj);
+                if(args){
+                    if(isArray){
+                        for(;i < length ; i++){
+                            value = callback.apply(obj[i][0],args);
+                            if(value === false)  break;
+                        }
+                    }else{
+                        for(i in obj){
+                            value = callback.apply(obj[i][0],args);
+                            if(value === false)  break;
+                        }
+                    }
+                }else{
+                    if(isArray){
+                        for(;i<length;i++){
+                            value = callback.call(obj[i][0], i, obj[i][0].context);
+                            if (value === false)  break;
+                        }
+                    }else{
+                        for(i in obj){
+                            value = callback.call(obj[i][0], i, obj[i][0].context);
+                            if (value === false)  break;
+                        }
+                    }
+                }
+
+                return obj;
+            }
         };
 
         Selector.fn.extend({
@@ -209,15 +213,15 @@
 
                 var elem = this.context;
                 elem = (elem.type && elem.nodeType === 1)? elem : function(){
-                    if(Normal.isArray(elem)){
+                    if(Selector.isArray(elem)){
                         var results = [];
                         for(var i = 0;i<elem.length;i++){
                             var obj = elem[i];
                             if(!obj[0] || !obj[0].context) continue;
                             var type = obj[0].type;
-                            if(type in Expr.relative) continue;
+                            if(type in Selector.Expr.relative) continue;
 
-                            if(Normal.indexOf(results,obj[0].context) == -1){
+                            if(Selector.indexOf(results,obj[0].context) == -1){
                                 results.push(obj[0].context);
                             }
                         }
@@ -235,10 +239,10 @@
                 }
 
                 if(value!= undefined){
-                    (Normal.isArray(elem) === true)?function(){
+                    (Selector.isArray(elem) === true)?function(){
                         for(var j =0;j<elem.length;j++){
                             var obj = elem[j];
-                            (typeof value == "string" && value.constructor== String) ? obj.value = value : ( Normal.isArray(value) === true ? function(){
+                            (typeof value == "string" && value.constructor== String) ? obj.value = value : ( Selector.isArray(value) === true ? function(){
                                 var str = "";
                                 for(var x = 0;x<value.length;x++){
                                     if(value[x]){
@@ -250,7 +254,7 @@
                         }
                     }():elem.value = value;
                 }else{
-                    var ret = (Normal.isArray(elem) === true)?function(){
+                    var ret = (Selector.isArray(elem) === true)?function(){
                         for(var j =0;j<elem.length;j++){
                             var obj = elem[j];
                             ret = obj.value;
@@ -291,7 +295,7 @@
                 var s = [];
                 for(var x = 0;x < ret.length;x++){
                     if(!ret[x][0].context) continue;
-                    if(Normal.indexOf(s,ret[x][0].context) == -1)
+                    if(Selector.indexOf(s,ret[x][0].context) == -1)
                         s.push(ret[x][0].context);
                 }
 
@@ -309,7 +313,7 @@
                     if(!context[0]) continue;
                     context = context[0];
                     if(!context || !context.context) continue;
-                    if(Normal.indexOf(c,context.context) == -1)
+                    if(Selector.indexOf(c,context.context) == -1)
                         c.push(context.context);
                 }
 
@@ -325,7 +329,7 @@
                         for(var x = 0;x<c.length;x++){
                             var node = c[x];
                             if(elem === node){
-                                if(!Normal.isObjExsist(results,{"context":elemNode}))
+                                if(!Selector.isObjExsist(results,{"context":elemNode}))
                                     results.push([{"context": elemNode}]);
                             }
                         }
@@ -353,7 +357,7 @@
             init:function(selector){
                 if(typeof selector === "string"){
                     selector = selector.trim();
-                    if(!Support.isQSA){
+                    if(!Selector.isQSA){
                         var contexts = document.querySelectorAll(selector);
                         var len = contexts.length,i = 0;
                         var results = [];
@@ -400,7 +404,7 @@
                     }
 
                     var i,token,type,seed = [],flag="",pt="",value;
-                    i = Expr.needsContext().test( selector ) ? 0 : tokens.length;
+                    i = Selector.Expr.needsContext().test( selector ) ? 0 : tokens.length;
                     var count = 0;
                     while(i--){
                         token = tokens[i];
@@ -421,7 +425,7 @@
                                     var pNode;
 
                                     if(flag === "parentNode"){
-                                        if(pt in Expr.relative){
+                                        if(pt in Selector.Expr.relative){
                                             pNode = seed[0][j].pNode?seed[0][j].pNode.parentNode:node_context.parentNode;
                                         }else{
                                             pNode = seed[0][j].pNode;
@@ -504,8 +508,8 @@
                                 seed.push(s);
                             }
 
-                        }else if(type in Expr.relative){//关系符号
-                            flag = Expr.relative[type].dir;
+                        }else if(type in Selector.Expr.relative){//关系符号
+                            flag = Selector.Expr.relative[type].dir;
                             pt = type;
                         }
 
@@ -546,9 +550,9 @@
                             var _obj = obj[x],type = _obj.type,value = _obj.value;
 
                             if(!value) continue;
-                            if(type in Expr.relative) continue;
+                            if(type in Selector.Expr.relative) continue;
 
-                            if(!Normal.isObjExsist(results,_obj)){
+                            if(!Selector.isObjExsist(results,_obj)){
                                 results.push([_obj]);
                             }
                         }
@@ -583,7 +587,7 @@
                         var s = [];
                         for(var j = 0;j<ret.length;j++){
                             if(!ret[j][0].context) continue;
-                            if(Normal.indexOf(ret,ret[j][0].context) == -1)
+                            if(Selector.indexOf(ret,ret[j][0].context) == -1)
                                 s.push(ret[j][0].context);
                         }
 
@@ -609,8 +613,8 @@
                                     }
 
                                     if(cNode.nodeType && cNode.nodeType === 1){
-                                        if(Normal.indexOf(ret,cNode)!= -1){
-                                            if(Normal.indexOf(results,cNode.context) == -1 && cNode.nodeName != "#text" && cNode.nodeName != "BR") {
+                                        if(Selector.indexOf(ret,cNode)!= -1){
+                                            if(Selector.indexOf(results,cNode.context) == -1 && cNode.nodeName != "#text" && cNode.nodeName != "BR") {
                                                 results.push([{"context": cNode}]);
                                             }
                                         }
@@ -623,14 +627,14 @@
                         }():function(){
                             if(nextPrevNode.nodeType && nextPrevNode.nodeType === 1){
                                 flag === true ? function(){
-                                    Normal.indexOf(ret,nextPrevNode)!= -1 ? function(){
-                                        if(Normal.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
+                                    Selector.indexOf(ret,nextPrevNode)!= -1 ? function(){
+                                        if(Selector.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
                                             results.push([{"context": nextPrevNode}]);
                                             getNextPrevNode(nextPrevNode);
                                         }
                                     }(): getNextPrevNode(nextPrevNode);
                                 }():function(){
-                                    if(Normal.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
+                                    if(Selector.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
                                         results.push([{"context": nextPrevNode}]);
                                     }
                                 }();
@@ -644,7 +648,7 @@
                 this.context = results;
                 return this;
             }
-            
+
         });
 
         var filter = {
@@ -672,7 +676,7 @@
 
             "CLASS":function(className){
                 return function(elem){
-                    if(Support.getElementsByClassName){
+                    if(Selector.isSupportGetClsName){
                         elem = elem ? elem : document;
                         var contexts = elem.getElementsByClassName(className);
                         var len = contexts.length,i = 0;
