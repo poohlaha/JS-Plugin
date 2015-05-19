@@ -179,6 +179,12 @@
 
                 "CHILD":function(type, what, argument, first, last){
 
+                },
+
+                "PSEUDO":function(match){
+                    return function(){
+
+                    };
                 }
             }
 
@@ -321,6 +327,28 @@
                     }
                 }
                 return ret;
+            },
+
+            removeData:function(elem,name){
+                var cache = Selector.cache || {},key = "data",elemKey = "node",thisCache;
+                cache[name] = Selector.cache[name] || {};
+                thisCache = cache[name];
+                thisCache[elemKey] = thisCache[elemKey] || [];
+
+                if(thisCache[elemKey].length === 0) return;
+
+                var ret = [];
+                if(Selector.indexOf(thisCache[elemKey],elem) == -1) return;
+
+                for(var i =0;i<thisCache[elemKey].length;i++){
+                    var node = thisCache[elemKey][i];
+                    if(node !== elem){
+                        ret.push(node);
+                    }
+                }
+
+                thisCache[elemKey].length = 0;
+                thisCache[elemKey] = ret;
             },
 
             trim: function( text ) {
@@ -547,7 +575,14 @@
                     this.each(function(){
                         Selector.data(this.context,key,value);
                     }) : (elem ? Selector.dataAttr(elem[0].context,key,Selector.data(elem[0].context,key)):undefined)
+            },
 
+            removeData:function(key){
+                if(!key || typeof key !== "string") return;
+
+                return this.each(function() {
+                    Selector.removeData( this.context, key );
+                });
             }
         });
 
