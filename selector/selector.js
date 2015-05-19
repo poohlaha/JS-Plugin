@@ -256,10 +256,8 @@
 
             isQSA:function(){
                 return Selector.isNative(document.querySelectorAll);
-            }
-        });
+            },
 
-        var hooks = {
             each:function(obj,callback,args){
                 var value,i = 0,length = obj.length;
                 var isArray = Selector.isArray(obj);
@@ -291,7 +289,8 @@
 
                 return obj;
             }
-        };
+        });
+
 
         Selector.fn.extend({
             val : function(value){
@@ -358,7 +357,7 @@
             },
 
             each:function(callback,args){
-                return hooks.each(this.context,callback,args);
+                return Selector.each(this.context,callback,args);
             },
             next:function(value){
                 return Selector.getNextOrPrevNode.call(this,"next",value);
