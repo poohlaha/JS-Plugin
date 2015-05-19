@@ -1,215 +1,4 @@
-(function(window,document,undefined){
-    function addEvent(elem,type,fn,useCapture){
-        if (elem.addEventListener) {
-            if(useCapture == undefined)
-                useCapture = false;
-            elem.addEventListener(type, fn, useCapture);//DOM2.0
-            return;
-        }else if(elem.attachEvent){
-            elem.attachEvent('on'+type, fn);
-            return;
-        }else{
-            elem['on'+type] = fn;
-            return;
-        }
-    }
-
-    function assert(fn){
-        var div = document.createElement("div");
-        try{
-            return !!fn(div);
-        }catch(e){
-            return false;
-        }finally{
-            if(div.parentNode){
-                div.parentNode.removeChild( div );
-            }
-
-            div = null;
-        }
-    }
-
-    var Pizzle = (function(window){
-        var Express = {};
-
-        var Support = {};
-
-        function getExpr(){
-            var whitespace = "[\\x20\\t\\r\\n\\f]";//空白字符正则字符串
-            var operators = "([*^$|!~]?=)";//可用的属性操作符
-            var rcomma = "^" + whitespace + "*," + whitespace + "*";//并联选择器的正则
-            var rcombinators = "^" + whitespace + "*([\\x20\\t\\r\\n\\f>+~])" + whitespace + "*";//关系选择器正则
-            var characterEncoding = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+";//字符编码正则字符串
-            var identifier = characterEncoding.replace( "w", "w#" );
-            var attributes = "\\[" + whitespace + "*(" + characterEncoding + ")" + whitespace +
-                "*(?:" + operators + whitespace + "*(?:(['\"])((?:\\\\.|[^\\\\])*?)\\3|(" + identifier + ")|)|)" + whitespace + "*\\]";//属性选择器正则
-            var pseudos = ":(" + characterEncoding + ")(?:\\(((['\"])((?:\\\\.|[^\\\\])*?)\\3|((?:\\\\.|[^\\\\()[\\]]|" + attributes.replace( 3, 8 ) + ")*)|.*)\\)|)";//伪类正则字符串
-            var rtrim = "^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$"; // 去掉两端空白和字符串中的反斜杠（如果连续两个去掉一个）
-            //var rquickExpr = /^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/;//仅仅单个id或tag、class选择器正则（用来快速解析并获取元素）
-            var rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/;
-            var rnative = /^[^{]+\{\s*\[native code/;//原生函数正则
-            var expando = "pizzle" + 1 * new Date();
-
-            return {
-                rcomma:new RegExp(rcomma),
-                rcombinators:new RegExp(rcombinators),
-                characterEncoding:characterEncoding,
-                attributes:attributes,
-                pseudos:pseudos,
-                rtrim:new RegExp(rtrim,"g"),
-                rquickExpr:new RegExp(rquickExpr),
-                rnative:rnative,
-                expando:expando
-            };
-        }
-
-        function getMatchExpr(){
-            var idExpr = "^#(" + Express.expr['characterEncoding'] + ")";
-            var classExpr = "^\\.(" + Express.expr['characterEncoding'] + ")";
-            var tagExpr =  "^(" + Express.expr['characterEncoding'].replace( "w", "w*" ) + ")";
-            var attrExpr = "^" + Express.expr['attributes'];
-            var pseudosExpr = "^" + Express.expr['pseudos'];
-            var childEpr = "^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + Express.expr['whitespace'] +
-                "*(even|odd|(([+-]|)(\\d*)n|)" + Express.expr['whitespace'] + "*(?:([+-]|)" + Express.expr['whitespace'] +
-                "*(\\d+)|))" + Express.expr['whitespace'] + "*\\)|)";
-
-            return {
-                "ID":new RegExp(idExpr),
-                "CLASS":new RegExp(classExpr),
-                "TAG":new RegExp(tagExpr),
-                "ATTR":new RegExp(attrExpr),
-                "PSEUDO":new RegExp(pseudosExpr),
-                "CHILD":new RegExp(childEpr, "i" )
-            };
-        }
-
-
-        function Pizzle(selector){
-            if(!selector)
-                return;
-
-            return Pizzle.participle(selector);
-        }
-
-        Pizzle.init = function(){
-            Express.expr = getExpr();
-            Express.matchExpr = getMatchExpr();
-            Support.isQSA = Express.expr['rnative'].test(document.querySelectorAll);
-        };
-
-        /**
-         * participle selector
-         * @param selector
-         */
-        Pizzle.participle = function(selector){
-            if(typeof selector !== "string"){
-                return [];
-            }
-
-            Pizzle.init();
-            var match,matched,tokens = [],groups = [];
-
-            //Handle HTML strings
-            if ( selector.charAt(0) === "<" && selector.charAt( selector.length - 1 ) === ">" && selector.length >= 3 ) {
-                // Assume that strings that start and end with <> are HTML and skip the regex check
-                var m = selector.substring(1,selector.length - 1);
-                match = [ m, null,m, null ];
-            } else {
-                match = Express.expr.rquickExpr.exec(selector);
-            }
-
-            if(match){
-                matched = match[1] || match[2] || match[3] ||'';
-                var type = (matched == match[1]) ? "ID" : ((matched == match[2]) ? "TAG" : (matched == match[3]) ? "CLASS" : "");
-                var sep = undefined,newMatched = undefined,oldMatched = match[0];
-                if(oldMatched.charAt(0) === "#" || oldMatched.charAt(0) === "." || oldMatched.charAt(0) === ":"){
-                    sep = oldMatched.charAt(0);
-                    newMatched = oldMatched.substring(1,oldMatched.length);
-                }
-
-                tokens.push({
-                    value: newMatched ? newMatched : matched,
-                    type: type,
-                    sep: sep ? sep : "",
-                    matches: selector
-                });
-
-                groups.push(tokens);
-                return groups;
-            }else{
-                return Pizzle.tokenize(selector);
-            }
-        };
-
-        /**
-         * participle many selectors
-         * @param selector
-         * @returns {Array}
-         */
-        Pizzle.tokenize = function(selector){
-            var matched,match,tokens,type,str = selector,groups = [];
-            while(str){
-                //,
-                if(!matched || (match = Express.expr.rcomma.exec(str))){
-                    if(match){
-                        str = str.slice(match[0].length) || str;
-                    }
-                    groups.push(tokens = []);
-                }
-
-                matched = false;
-                //+-~
-                if((match = Express.expr.rcombinators.exec(str))!=null){
-                    matched = match.shift();
-                    tokens.push({
-                        value:matched == " " ? matched : matched.trim(),
-                        type:match[0].replace(Express.expr.rtrim," ")
-                    });
-
-                    str = str.slice(matched.length);
-                }
-
-                for(type in Express.matchExpr){
-                    if((match = Express.matchExpr[ type ].exec( str ))!=null){
-                        matched = match.shift();
-                        var sep = undefined,newMatched = undefined;
-                        if(matched.charAt(0) === "#" || matched.charAt(0) === "." || matched.charAt(0) === ":"){
-                            sep = matched.charAt(0);
-                            newMatched = matched.substring(1,matched.length);
-                        }
-                        tokens.push({
-                            value: newMatched ? newMatched : matched,
-                            type: type,
-                            sep: sep ? sep : "",
-                            matches: match
-                        });
-
-                        str = str.slice(matched.length);
-                    }
-                }
-
-                if ( !matched ) {
-                    break;
-                }
-            }
-
-            return groups;
-        };
-
-
-        Pizzle.error = function(message){
-            throw new Error( "Syntax error, unrecognized expression: " + message );
-        };
-
-        Pizzle.isXml = function(elem){
-            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-            return documentElement ? documentElement.nodeName !== "HTML" : false;
-        };
-
-        return Pizzle;
-    })(window);
-
-
+(function(window,document,undefined,Pizzle){
     var Selector = (function(Pizzle){
         var Normal = {
             isArray : function(obj){
@@ -308,8 +97,6 @@
         };
 
         var hooks = {
-
-
             each:function(obj,callback,args){
                 var value,i = 0,length = obj.length;
                 var isArray = Normal.isArray(obj);
@@ -440,50 +227,6 @@
                     callback();
                 }
             }
-        };
-
-        Selector.init = function(selector){
-            if(typeof selector === "string"){
-                selector = selector.trim();
-                if(!Support.isQSA){
-                    var contexts = document.querySelectorAll(selector);
-                    var len = contexts.length,i = 0;
-                    var results = [];
-                    if(!len || len == 0){
-                        this.context = results;
-                        return this;
-                    }
-
-                    for(; i < len; i++){
-                        results.push([{
-                            context:contexts[i]?contexts[i]:"",
-                            type:"NODE"
-                        }]);
-                    }
-
-                    this.context = results;
-                }else{
-                    groups = Pizzle(selector);
-                    this.groups = groups;
-                    if(!this.groups || this.groups.length == 0)
-                        return this;
-
-                    this.context = Selector.match()(this.groups,selector);
-                }
-                console.log(this);
-                return this;
-            }else if(selector.context && selector.context.nodeType && selector.context.nodeType === 1){//elem
-                var groups = [];
-                groups.push([{
-                    sep:selector.sep?selector.sep:"",
-                    type:selector.type?selector.type:"",
-                    value:selector.value?selector.value:""
-                }]);
-                this.groups = groups;
-                this.context = selector.context;
-                return this;
-            }
-
         };
 
         Selector.fn = Selector.prototype = {
@@ -689,176 +432,219 @@
             },
 
             data:function(key,value){
-               
+
             }
         });
 
+        Selector.extend({
+            init:function(selector){
+                if(typeof selector === "string"){
+                    selector = selector.trim();
+                    if(!Support.isQSA){
+                        var contexts = document.querySelectorAll(selector);
+                        var len = contexts.length,i = 0;
+                        var results = [];
+                        if(!len || len == 0){
+                            this.context = results;
+                            return this;
+                        }
 
-        Selector.select = function(){
-            return function(selector,tokens){
-                if(tokens.length == 0){
-                    return [];
+                        for(; i < len; i++){
+                            results.push([{
+                                context:contexts[i]?contexts[i]:"",
+                                type:"NODE"
+                            }]);
+                        }
+
+                        this.context = results;
+                    }else{
+                        groups = Pizzle(selector);
+                        this.groups = groups;
+                        if(!this.groups || this.groups.length == 0)
+                            return this;
+
+                        this.context = Selector.match()(this.groups,selector);
+                    }
+                    console.log(this);
+                    return this;
+                }else if(selector.context && selector.context.nodeType && selector.context.nodeType === 1){//elem
+                    var groups = [];
+                    groups.push([{
+                        sep:selector.sep?selector.sep:"",
+                        type:selector.type?selector.type:"",
+                        value:selector.value?selector.value:""
+                    }]);
+                    this.groups = groups;
+                    this.context = selector.context;
+                    return this;
                 }
-
-                var i,token,type,seed = [],flag="",pt="",value;
-                i = Expr.needsContext().test( selector ) ? 0 : tokens.length;
-                var count = 0;
-                while(i--){
-                    token = tokens[i];
-                    type = token.type;
-                    value = token.value;
-                    if((!seed[0] || seed[0].length == 0) && count != 0){
-                        count++;
-                        continue;
+            },
+            
+            select:function(){
+                return function(selector,tokens){
+                    if(tokens.length == 0){
+                        return [];
                     }
 
-                    if(type in filter){
-                        var node = filter[type](token.value)();
+                    var i,token,type,seed = [],flag="",pt="",value;
+                    i = Expr.needsContext().test( selector ) ? 0 : tokens.length;
+                    var count = 0;
+                    while(i--){
+                        token = tokens[i];
+                        type = token.type;
+                        value = token.value;
+                        if((!seed[0] || seed[0].length == 0) && count != 0){
+                            count++;
+                            continue;
+                        }
 
-                        if(flag === "parentNode" || flag === "previousSibling" ){
-                            var s = [];
-                            for(var j = 0;j<seed[0].length;j++){
-                                var node_context = seed[0][j].context;
-                                var pNode;
+                        if(type in filter){
+                            var node = filter[type](token.value)();
 
-                                if(flag === "parentNode"){
-                                    if(pt in Expr.relative){
-                                        pNode = seed[0][j].pNode?seed[0][j].pNode.parentNode:node_context.parentNode;
+                            if(flag === "parentNode" || flag === "previousSibling" ){
+                                var s = [];
+                                for(var j = 0;j<seed[0].length;j++){
+                                    var node_context = seed[0][j].context;
+                                    var pNode;
+
+                                    if(flag === "parentNode"){
+                                        if(pt in Expr.relative){
+                                            pNode = seed[0][j].pNode?seed[0][j].pNode.parentNode:node_context.parentNode;
+                                        }else{
+                                            pNode = seed[0][j].pNode;
+                                        }
+
                                     }else{
-                                        pNode = seed[0][j].pNode;
+                                        pNode = node_context.previousSibling;
                                     }
 
-                                }else{
-                                    pNode = node_context.previousSibling;
-                                }
+                                    if(!pNode)
+                                        continue;
 
-                                if(!pNode)
-                                    continue;
-
-                                flag === "parentNode" ? function(){
-                                    for(var t = 0;t < node.length;t++){
-                                        if(node[t].context === pNode){
-                                            var sNode = pNode;
-                                            seed[0][j].pNode = sNode ? sNode : null ;
-                                            s.push(seed[0][j]);
-                                            return;
-                                        }
-                                    }
-
-                                    var _pNode = pNode.parentNode;
-                                    if(!_pNode) return;
-
-                                    var getParentNode  = function(elem){
-                                        for(var x = 0;x<node.length;x++){
-                                            if(node[x].context === elem){
-                                                seed[0][j].pNode = elem ? elem : null ;
-                                                s.push(seed[0][j]);
-                                                return;
-                                            }
-                                        }
-
-                                        var _eNode = elem.parentNode;
-                                        if(!_eNode) return;
-                                        getParentNode(_eNode);
-                                    };
-                                    getParentNode(_pNode);
-
-                                }():function(){
-                                    var getNode = function(elem){
+                                    flag === "parentNode" ? function(){
                                         for(var t = 0;t < node.length;t++){
-                                            if(node[t].context === elem){
+                                            if(node[t].context === pNode){
+                                                var sNode = pNode;
+                                                seed[0][j].pNode = sNode ? sNode : null ;
                                                 s.push(seed[0][j]);
                                                 return;
                                             }
                                         }
 
-                                        var nNode = elem.previousSibling;
-                                        if(!nNode)
-                                            return;
+                                        var _pNode = pNode.parentNode;
+                                        if(!_pNode) return;
 
-                                        return getNode(nNode);
-                                    };
+                                        var getParentNode  = function(elem){
+                                            for(var x = 0;x<node.length;x++){
+                                                if(node[x].context === elem){
+                                                    seed[0][j].pNode = elem ? elem : null ;
+                                                    s.push(seed[0][j]);
+                                                    return;
+                                                }
+                                            }
 
-                                    getNode(pNode);
-                                }();
-                            }
+                                            var _eNode = elem.parentNode;
+                                            if(!_eNode) return;
+                                            getParentNode(_eNode);
+                                        };
+                                        getParentNode(_pNode);
 
-                            seed.length = 0;
-                            seed.push(s);
-                            pt = type;
-                        }else{
-                            if(count === 0){
-                                seed.push(node);
-                                count++;
-                                continue;
-                            }
+                                    }():function(){
+                                        var getNode = function(elem){
+                                            for(var t = 0;t < node.length;t++){
+                                                if(node[t].context === elem){
+                                                    s.push(seed[0][j]);
+                                                    return;
+                                                }
+                                            }
 
-                            var s = []
-                            for(var j = 0;j<seed[0].length;j++){
-                                var node_context = seed[0][j].context;
-                                if(node_context.nodeName === (value).toUpperCase()){
-                                    s.push(seed[0][j]);
+                                            var nNode = elem.previousSibling;
+                                            if(!nNode)
+                                                return;
+
+                                            return getNode(nNode);
+                                        };
+
+                                        getNode(pNode);
+                                    }();
                                 }
+
+                                seed.length = 0;
+                                seed.push(s);
+                                pt = type;
+                            }else{
+                                if(count === 0){
+                                    seed.push(node);
+                                    count++;
+                                    continue;
+                                }
+
+                                var s = []
+                                for(var j = 0;j<seed[0].length;j++){
+                                    var node_context = seed[0][j].context;
+                                    if(node_context.nodeName === (value).toUpperCase()){
+                                        s.push(seed[0][j]);
+                                    }
+                                }
+
+                                seed.length = 0;
+                                seed.push(s);
                             }
 
-                            seed.length = 0;
-                            seed.push(s);
+                        }else if(type in Expr.relative){//关系符号
+                            flag = Expr.relative[type].dir;
+                            pt = type;
                         }
 
-                    }else if(type in Expr.relative){//关系符号
-                        flag = Expr.relative[type].dir;
-                        pt = type;
+                        count++;
                     }
 
-                    count++;
+                    return seed;
                 }
+            },
 
-                return seed;
-            }
-        };
+            match:function(){
+                return function(tokens,selector){
+                    var results = [];
+                    for(var i =0;i<tokens.length;i++){
+                        var seed = Selector.select()(selector,tokens[i]);
+                        if(seed.length > 0)
+                            results.push(seed);
+                    }
 
-        Selector.match = function(){
-            return function(tokens,selector){
-                var results = [];
-                for(var i =0;i<tokens.length;i++){
-                    var seed = Selector.select()(selector,tokens[i]);
-                    if(seed.length > 0)
-                        results.push(seed);
-                }
+                    if(results.length != 0 )
+                        results = Selector.analysisGroup()(results);
 
-                if(results.length != 0 )
-                    results = Selector.analysisGroup()(results);
+                    return results;
+                };
+            },
 
-                return results;
-            };
+            analysisGroup:function(){
+                return function(groups){
+                    var results = [];
+                    var i = 0,len = groups.length;
+                    for(;i<len;i++){
+                        var obj = groups[i][0];
+                        if(obj.length == 0) continue;
 
-        };
+                        if(!obj) continue;
 
-        Selector.analysisGroup = function(){
-            return function(groups){
-                var results = [];
-                var i = 0,len = groups.length;
-                for(;i<len;i++){
-                    var obj = groups[i][0];
-                    if(obj.length == 0) continue;
+                        for(var x =0;x<obj.length;x++){
+                            var _obj = obj[x],type = _obj.type,value = _obj.value;
 
-                    if(!obj) continue;
+                            if(!value) continue;
+                            if(type in Expr.relative) continue;
 
-                    for(var x =0;x<obj.length;x++){
-                        var _obj = obj[x],type = _obj.type,value = _obj.value;
-
-                        if(!value) continue;
-                        if(type in Expr.relative) continue;
-
-                        if(!Normal.isObjExsist(results,_obj)){
-                            results.push([_obj]);
+                            if(!Normal.isObjExsist(results,_obj)){
+                                results.push([_obj]);
+                            }
                         }
                     }
-                }
 
-                return results;
+                    return results;
+                }
             }
-        };
+        });
 
         var filter = {
             "ID":function(id){
@@ -962,7 +748,7 @@
     }
 
     window._ = window.$ = getSelector;
-})(window,document,undefined);
+})(window,document,undefined,Pizzle);
 
 /**
  节点类型	                      描述	                                                   子节点
