@@ -130,93 +130,6 @@
             }
         };
 
-        Normal.getNextOrPrevNode = function(cur,value){
-            if(!this.context || this.context.length == 0){
-                this.context = [];
-                return this;
-            }
-
-            var flag = value ? true : false;
-
-            var x = 0,results = [],contexts = this.context,len = contexts.length;
-            for(;x<len;x++){
-                var context = contexts[x];
-                if(!context[0]) continue;
-
-                context = context[0];
-                if(!context || !context.context) continue;
-
-                var ret = [];
-                if(flag){
-                    var groups = Pizzle(value);
-                    ret = Selector.match()(groups,value);
-                    if(ret.length === 0) continue;
-
-                    var s = [];
-                    for(var j = 0;j<ret.length;j++){
-                        if(!ret[j][0].context) continue;
-                        if(Normal.indexOf(ret,ret[j][0].context) == -1)
-                            s.push(ret[j][0].context);
-                    }
-
-                    ret.length = 0;
-                    ret = s;
-                }
-
-                var getNextPrevNode = function(elem){
-                    var nextPrevNode = (cur === "next") ? elem.nextSibling : elem.previousSibling;
-                    if(!nextPrevNode) return;
-
-                    if(!nextPrevNode.nodeType || nextPrevNode.nodeType != 1) getNextPrevNode(nextPrevNode);
-
-                    nextPrevNode.hasChildNodes()? function(){
-                        var getChildNode = function (elem) {
-                            var childNodes = elem.childNodes;
-                            if(childNodes.length === 0) return;
-                            var y = 0,cLen = childNodes.length;
-                            for(;y < cLen; y++){
-                                var cNode = childNodes[y];
-                                if(cNode.hasChildNodes()){
-                                    getChildNode(cNode);
-                                }
-
-                                if(cNode.nodeType && cNode.nodeType === 1){
-                                    if(Normal.indexOf(ret,cNode)!= -1){
-                                        if(Normal.indexOf(results,cNode.context) == -1 && cNode.nodeName != "#text" && cNode.nodeName != "BR") {
-                                            results.push([{"context": cNode}]);
-                                        }
-                                    }
-                                }
-                            }
-                        };
-
-                        getChildNode(nextPrevNode);
-                        getNextPrevNode(nextPrevNode);
-                    }():function(){
-                        if(nextPrevNode.nodeType && nextPrevNode.nodeType === 1){
-                            flag === true ? function(){
-                                Normal.indexOf(ret,nextPrevNode)!= -1 ? function(){
-                                    if(Normal.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
-                                        results.push([{"context": nextPrevNode}]);
-                                        getNextPrevNode(nextPrevNode);
-                                    }
-                                }(): getNextPrevNode(nextPrevNode);
-                            }():function(){
-                                if(Normal.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
-                                    results.push([{"context": nextPrevNode}]);
-                                }
-                            }();
-                        }
-                    }();
-                };
-
-                getNextPrevNode(context.context);
-            }
-
-            this.context = results;
-            return this;
-        };
-
         function Selector(selector){
             return (typeof selector === "function" ) ? Selector.ready(selector) : Selector.init.call(this,selector);
         }
@@ -354,11 +267,11 @@
                 return hooks.each(this.context,callback,args);
             },
             next:function(value){
-                return Normal.getNextOrPrevNode.call(this,"next",value);
+                return Selector.getNextOrPrevNode.call(this,"next",value);
             },
 
             prev:function(value){
-                return Normal.getNextOrPrevNode.call(this,"prev",value);
+                return Selector.getNextOrPrevNode.call(this,"prev",value);
             },
 
             find:function(value){
@@ -479,7 +392,7 @@
                     return this;
                 }
             },
-            
+
             select:function(){
                 return function(selector,tokens){
                     if(tokens.length == 0){
@@ -643,7 +556,95 @@
 
                     return results;
                 }
+            },
+
+            getNextOrPrevNode:function(cur,value){
+                if(!this.context || this.context.length == 0){
+                    this.context = [];
+                    return this;
+                }
+
+                var flag = value ? true : false;
+
+                var x = 0,results = [],contexts = this.context,len = contexts.length;
+                for(;x<len;x++){
+                    var context = contexts[x];
+                    if(!context[0]) continue;
+
+                    context = context[0];
+                    if(!context || !context.context) continue;
+
+                    var ret = [];
+                    if(flag){
+                        var groups = Pizzle(value);
+                        ret = Selector.match()(groups,value);
+                        if(ret.length === 0) continue;
+
+                        var s = [];
+                        for(var j = 0;j<ret.length;j++){
+                            if(!ret[j][0].context) continue;
+                            if(Normal.indexOf(ret,ret[j][0].context) == -1)
+                                s.push(ret[j][0].context);
+                        }
+
+                        ret.length = 0;
+                        ret = s;
+                    }
+
+                    var getNextPrevNode = function(elem){
+                        var nextPrevNode = (cur === "next") ? elem.nextSibling : elem.previousSibling;
+                        if(!nextPrevNode) return;
+
+                        if(!nextPrevNode.nodeType || nextPrevNode.nodeType != 1) getNextPrevNode(nextPrevNode);
+
+                        nextPrevNode.hasChildNodes()? function(){
+                            var getChildNode = function (elem) {
+                                var childNodes = elem.childNodes;
+                                if(childNodes.length === 0) return;
+                                var y = 0,cLen = childNodes.length;
+                                for(;y < cLen; y++){
+                                    var cNode = childNodes[y];
+                                    if(cNode.hasChildNodes()){
+                                        getChildNode(cNode);
+                                    }
+
+                                    if(cNode.nodeType && cNode.nodeType === 1){
+                                        if(Normal.indexOf(ret,cNode)!= -1){
+                                            if(Normal.indexOf(results,cNode.context) == -1 && cNode.nodeName != "#text" && cNode.nodeName != "BR") {
+                                                results.push([{"context": cNode}]);
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+
+                            getChildNode(nextPrevNode);
+                            getNextPrevNode(nextPrevNode);
+                        }():function(){
+                            if(nextPrevNode.nodeType && nextPrevNode.nodeType === 1){
+                                flag === true ? function(){
+                                    Normal.indexOf(ret,nextPrevNode)!= -1 ? function(){
+                                        if(Normal.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
+                                            results.push([{"context": nextPrevNode}]);
+                                            getNextPrevNode(nextPrevNode);
+                                        }
+                                    }(): getNextPrevNode(nextPrevNode);
+                                }():function(){
+                                    if(Normal.indexOf(results,nextPrevNode.context) == -1 && nextPrevNode.nodeName != "#text" && nextPrevNode.nodeName != "BR") {
+                                        results.push([{"context": nextPrevNode}]);
+                                    }
+                                }();
+                            }
+                        }();
+                    };
+
+                    getNextPrevNode(context.context);
+                }
+
+                this.context = results;
+                return this;
             }
+            
         });
 
         var filter = {
