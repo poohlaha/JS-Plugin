@@ -84,6 +84,96 @@
                     "+": { dir: "previousSibling", first: true },
                     "~": { dir: "previousSibling" }
                 }
+            },
+
+            filter:{
+                "ID":function(id){
+                    return function(elem){
+                        elem = elem ? elem :((typeof document.getElementById(id) !== "undefined")?document.getElementById(id) : document.getAttributeNode(id));
+                        var results = [];
+                        if(!elem)
+                            return results;
+
+                        var isAttr = (elem.getAttribute("id") === id) ? true : false;
+                        if(!isAttr)
+                            return results;
+
+                        results.push({
+                            context:elem,
+                            type:"ID",
+                            value:id,
+                            sep:"#"
+                        });
+
+                        return results;
+                    }
+                },
+
+                "CLASS":function(className){
+                    return function(elem){
+                        elem = elem ? elem : document;
+                        var contexts = elem.getElementsByClassName(className);
+                        var len = contexts.length,i = 0;
+                        var results = [];
+                        if(!contexts.length)
+                            return results;
+
+                        for(; i < len; i++){
+                            results.push({
+                                context:contexts[i]?contexts[i]:"",
+                                type:"CLASS",
+                                sep:".",
+                                value:className
+                            });
+                        }
+
+                        return results;
+                    }
+                },
+
+                "TAG":function(tagName){
+                    return function(elem){
+                        elem = elem ? elem : document;
+                        var _elem,tmp = [],i = 0;
+                        var results = elem.getElementsByTagName(tagName);
+                        if(tagName === "*"){
+                            while ((_elem = results[i++])){
+                                if(_elem.nodeType === 1){
+                                    tmp.push({
+                                        context:_elem?_elem:"",
+                                        type:"TAG",
+                                        sep:"",
+                                        value:tagName
+                                    });
+                                }
+                            }
+
+                            return tmp;
+                        }
+
+                        if(results.length == 0)
+                            return tmp;
+
+                        for(;i<results.length;i++){
+                            tmp.push({
+                                context:results[i]?results[i]:"",
+                                type:"TAG",
+                                sep:"",
+                                value:tagName
+                            });
+                        }
+
+                        return tmp;
+                    }
+                },
+
+                "ATTR":function(name, operator, check){
+
+                },
+
+                "CHILD":function(type, what, argument, first, last){
+
+                }
             }
 
         });
@@ -415,8 +505,8 @@
                             continue;
                         }
 
-                        if(type in filter){
-                            var node = filter[type](token.value)();
+                        if(type in Selector.filter){
+                            var node = Selector.filter[type](token.value)();
 
                             if(flag === "parentNode" || flag === "previousSibling" ){
                                 var s = [];
@@ -650,100 +740,6 @@
             }
 
         });
-
-        var filter = {
-            "ID":function(id){
-                return function(elem){
-                    elem = elem ? elem :((typeof document.getElementById(id) !== "undefined")?document.getElementById(id) : document.getAttributeNode(id));
-                    var results = [];
-                    if(!elem)
-                        return results;
-
-                    var isAttr = (elem.getAttribute("id") === id) ? true : false;
-                    if(!isAttr)
-                        return results;
-
-                    results.push({
-                        context:elem,
-                        type:"ID",
-                        value:id,
-                        sep:"#"
-                    });
-
-                    return results;
-                }
-            },
-
-            "CLASS":function(className){
-                return function(elem){
-                    if(Selector.isSupportGetClsName){
-                        elem = elem ? elem : document;
-                        var contexts = elem.getElementsByClassName(className);
-                        var len = contexts.length,i = 0;
-                        var results = [];
-                        if(!contexts.length)
-                            return results;
-
-                        for(; i < len; i++){
-                            results.push({
-                                context:contexts[i]?contexts[i]:"",
-                                type:"CLASS",
-                                sep:".",
-                                value:className
-                            });
-                        }
-
-                        return results;
-                    }else{
-                        return [];
-                    }
-                }
-            },
-
-            "TAG":function(tagName){
-                return function(elem){
-                    elem = elem ? elem : document;
-                    var _elem,tmp = [],i = 0;
-                    var results = elem.getElementsByTagName(tagName);
-                    if(tagName === "*"){
-                        while ((_elem = results[i++])){
-                            if(_elem.nodeType === 1){
-                                tmp.push({
-                                    context:_elem?_elem:"",
-                                    type:"TAG",
-                                    sep:"",
-                                    value:tagName
-                                });
-                            }
-                        }
-
-                        return tmp;
-                    }
-
-                    if(results.length == 0)
-                        return tmp;
-
-                    for(;i<results.length;i++){
-                        tmp.push({
-                            context:results[i]?results[i]:"",
-                            type:"TAG",
-                            sep:"",
-                            value:tagName
-                        });
-                    }
-
-                    return tmp;
-                }
-            },
-
-            "ATTR":function(name, operator, check){
-
-            },
-
-            "CHILD":function(type, what, argument, first, last){
-
-            }
-        };
 
         return Selector;
     })(Pizzle);
