@@ -146,12 +146,28 @@
                         sep = matched.charAt(0);
                         newMatched = matched.substring(1,matched.length);
                     }
-                    tokens.push({
-                        value: newMatched ? newMatched : matched,
-                        type: type,
-                        sep: sep ? sep : "",
-                        matches: match
-                    });
+
+                    var value = newMatched ? newMatched : matched;
+                    var v = sep + value;
+                    var child;
+                    if((child =Express.matchExpr['CHILD'].exec(str))!=null){
+                        var m = child.input;
+                        var _value = m.substring(1,m.length);
+                        tokens.push({
+                            value: _value?_value:"",
+                            type: 'CHILD',
+                            sep: sep ? sep : "",
+                            matches: m
+                        });
+                    }else{
+                        tokens.push({
+                            value:value,
+                            type: type,
+                            sep: sep ? sep : "",
+                            matches: match
+                        });
+                    }
+
 
                     str = str.slice(matched.length);
                 }
