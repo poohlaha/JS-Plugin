@@ -89,6 +89,11 @@
                 rvalidtokens:/(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g,
                 rtrim:function(){
                     return new RegExp( "^" + Selector.Expr.whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + Selector.Expr.whitespace + "+$", "g" );
+                },
+                childEpr : function(){
+                    return new RegExp( "^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + Selector.Expr.whitespace +
+                    "*(even|odd|(([+-]|)(\\d*)n|)" + Selector.Expr.whitespace + "*(?:([+-]|)" + Selector.Expr.whitespace +
+                    "*(\\d+)|))" + Selector.Expr.whitespace + "*\\)|)","i");
                 }
             },
 
@@ -181,9 +186,49 @@
 
                 },
 
-                "PSEUDO":function(match){
-                    return function(){
+                "PSEUDO":function(){
+                    return function(elem,pToken,token){
+                        if(!elem || !token || !pToken) return undefined;
+                        var match = token.value;
+                        var nodes = [];
+                        var getNodes = function(result){
+                            if(result){
+                                var flag = false;
+                                for(var i = 0;i<nodes.length;i++){
+                                    var node = nodes[i];
+                                    if(node.context === result){
+                                        flag = true;
+                                        break;
+                                    }
+                                }
+                                if(!flag){
+                                    nodes.push({
+                                        context:result?result:"",
+                                        type:"NODE"
+                                    });
+                                }
+                            }
+                        };
 
+                        var getPlanObjectNode = function(){
+                            if(!elem[0] || !elem[0].context)
+                                return;
+                            var node = elem[0];
+                            var result = Selector.child(node.context,match);
+                            getNodes(result);
+                        };
+
+                        Selector.isArray(elem) ? function(){
+                            var i = 0,len = elem.length;
+                            for(;i<len;i++){
+                                var node = elem[i];
+                                if(!node || !node.context) continue;
+                                var result = Selector.child(node.context,match);
+                                getNodes(result);
+                            }
+                        }():getPlanObjectNode();
+
+                        return nodes;
                     };
                 }
             }
@@ -245,9 +290,13 @@
                 return false;
             },
 
+            isWindow: function( obj ) {
+                return obj != null && obj == obj.window;
+            },
+
             isPlainObject:function(obj){
                 var key;
-                if ( !obj || typeof obj !== "object" || obj.nodeType || jQuery.isWindow( obj ) ) {
+                if ( !obj || typeof obj !== "object" || obj.nodeType || Selector.isWindow( obj ) ) {
                     return false;
                 }
 
@@ -318,6 +367,7 @@
                         thisCache[elemKey].push(elem);
                 }
 
+                if(!thisCache[elemKey]) return ret;
                 if(typeof name === "string" && Selector.indexOf(thisCache[elemKey],elem)!=-1) {
                     ret = thisCache[key];
                     if (ret == null) {
@@ -347,6 +397,11 @@
                     }
                 }
 
+                if(ret.length === 0){
+                    delete cache[name];
+                    return;
+                }
+
                 thisCache[elemKey].length = 0;
                 thisCache[elemKey] = ret;
             },
@@ -364,7 +419,7 @@
 
                 var requireNonComma,
                     depth = null,
-                    str = jQuery.trim( data + "" );
+                    str = Selector.trim( data + "" );
 
                 return str && !Selector.trim( str.replace( Selector.Expr.rvalidtokens, function( token, comma, open, close ) {
                     if ( requireNonComma && comma ) {
@@ -403,7 +458,7 @@
                                     data === "null" ? null :
                                         // Only convert to a number if it doesn't change the string
                                         +data + "" === data ? +data :
-                                            Selector.Expr.rbrace.test( data ) ? jQuery.parseJSON( data ) :
+                                            Selector.Expr.rbrace.test( data ) ? Selector.parseJSON( data ) :
                                                 data;
                         }catch (e){}
                     }else{
@@ -413,6 +468,85 @@
                     data = data["data"];
                 }
                 return data;
+            },
+
+            child:function(elem,match){
+                var first,last,type = match,node;
+                switch (type){
+                    case "only"://如果某个元素是父元素中唯一的子元素，那将会被匹配,如果父元素中含有其他元素，那将不会被匹配。
+                        elem.hasChildNodes()?function(){
+                            var nodes = elem.childNodes;
+                            var onlyNode;
+                            if(nodes.length === 0) return;
+                            var count = 0;
+                            for(var i = 0;i<nodes.length;i++){
+                                var _node = nodes[i];
+                                if(_node.nodeName == "#text" ||  _node.nodeName == "#BR") continue;
+                                count++;
+                                if(_node.nodeType === 1){
+                                    onlyNode = _node;
+                                }
+
+                            }
+
+                            if(count != 1)
+                                return node = undefined;
+
+                            return node = onlyNode;
+
+                        }():node = undefined;
+                        break;
+
+                    case "first":
+
+                    case "first-child":
+                         elem.hasChildNodes()?function(){
+                             var getFirstChildNode = function(nNode){
+                                 var childNodes = nNode.childNodes;
+                                 if(childNodes.length === 0)
+                                    return;
+
+                                 var i = 0,len = childNodes.length;
+                                 for(;i<len;i++){
+                                    var _node = childNodes[i];
+                                    if(!_node) continue;
+
+                                     if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR")
+                                         return node = _node;
+                                 }
+                             };
+
+                             getFirstChildNode(elem);
+                         }():node = undefined;
+                         break;
+
+                    case "last":
+
+                    case "last-child":
+                        elem.hasChildNodes()?function(){
+                            var getLastChildNode = function(nNode){
+                                var childNodes = nNode.childNodes;
+                                if(childNodes.length === 0)
+                                    return;
+
+                                var len = childNodes.length,i = len - 1;
+                                for(i;i>0;i--){
+                                    var _node = childNodes[i];
+                                    if(!_node) continue;
+
+                                    if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR")
+                                        return node = _node;
+                                }
+                            };
+
+                            getLastChildNode(elem);
+                        }():node = undefined;
+                        break;
+                    case "nth":
+
+                }
+
+                return node;
             }
         });
 
@@ -636,21 +770,31 @@
                         return [];
                     }
 
-                    var i,token,type,seed = [],flag="",pt="",value;
-                    i = Selector.Expr.needsContext().test( selector ) ? 0 : tokens.length;
+                    var i,token,type,seed = [],flag="",pt="",value,childToken,childType = "";
+                    //i = Selector.Expr.needsContext().test( selector ) ? 0 : tokens.length;
+                    i = tokens.length;
                     var count = 0;
                     while(i--){
                         token = tokens[i];
                         type = token.type;
                         value = token.value;
-                        if((!seed[0] || seed[0].length == 0) && count != 0){
+                        if((!seed[0] || seed[0].length == 0) && count != 0 && childType !== "PSEUDO"){
                             count++;
                             continue;
                         }
 
                         if(type in Selector.filter){
-                            var node = Selector.filter[type](token.value)();
+                            if(type === "PSEUDO"){
+                                count++;
+                                childToken = token;
+                                childType = type;
+                                continue;
+                            }
 
+                            var node = Selector.filter[type](value)();
+                            if(childToken){
+                                node = Selector.filter[childType]()(node,token,childToken);
+                            }
                             if(flag === "parentNode" || flag === "previousSibling" ){
                                 var s = [];
                                 for(var j = 0;j<seed[0].length;j++){
@@ -723,9 +867,10 @@
                                 seed.push(s);
                                 pt = type;
                             }else{
-                                if(count === 0){
+                                if((count === 0 || count === 1) && node && childType === "PSEUDO"){
                                     seed.push(node);
                                     count++;
+                                    childType = type;
                                     continue;
                                 }
 
@@ -741,9 +886,11 @@
                                 seed.push(s);
                             }
 
+                            childType = type;
                         }else if(type in Selector.Expr.relative){//关系符号
                             flag = Selector.Expr.relative[type].dir;
                             pt = type;
+                            childType = type;
                         }
 
                         count++;
