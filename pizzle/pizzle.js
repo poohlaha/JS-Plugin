@@ -148,7 +148,7 @@
                     }
 
                     var value = newMatched ? newMatched : matched;
-                    var v = sep + value;
+                    /*var v = sep + value;
                     var child;
                     if((child =Express.matchExpr['CHILD'].exec(str))!=null){
                         var m = child.input;
@@ -159,14 +159,14 @@
                             sep: sep ? sep : "",
                             matches: m
                         });
-                    }else{
+                    }else{*/
                         tokens.push({
                             value:value,
                             type: type,
                             sep: sep ? sep : "",
                             matches: match
                         });
-                    }
+                   // }
 
 
                     str = str.slice(matched.length);
