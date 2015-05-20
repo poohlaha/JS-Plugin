@@ -211,10 +211,9 @@
                         };
 
                         var getPlanObjectNode = function(){
-                            if(!elem[0] || !elem[0].context)
-                                return;
-                            var node = elem[0];
-                            var result = Selector.child(node.context,match);
+                            elem = elem[0] || elem;
+                            var node = elem.context;
+                            var result = Selector.child(node,match);
                             getNodes(result);
                         };
 
@@ -764,139 +763,254 @@
                 }
             },
 
+            getNodeFromRTOL : function(tokens){
+                var i,token,type,seed = [],flag="",pt="",value;
+                //i = Selector.Expr.needsContext().test( selector ) ? 0 : tokens.length;
+                i = tokens.length;
+                var count = 0;
+                while(i--){
+                    token = tokens[i];
+                    type = token.type;
+                    value = token.value;
+                    if((!seed[0] || seed[0].length == 0) && count != 0){
+                        count++;
+                        continue;
+                    }
+
+                    if(type in Selector.filter){
+                        var node = Selector.filter[type](value)();
+                        if(flag === "parentNode" || flag === "previousSibling" ){
+                            var s = [];
+                            for(var j = 0;j<seed[0].length;j++){
+                                var node_context = seed[0][j].context;
+                                var pNode;
+
+                                if(flag === "parentNode"){
+                                    if(pt in Selector.Expr.relative){
+                                        pNode = seed[0][j].pNode?seed[0][j].pNode.parentNode:node_context.parentNode;
+                                    }else{
+                                        pNode = seed[0][j].pNode;
+                                    }
+
+                                }else{
+                                    pNode = node_context.previousSibling;
+                                }
+
+                                if(!pNode)
+                                    continue;
+
+                                flag === "parentNode" ? function(){
+                                    for(var t = 0;t < node.length;t++){
+                                        if(node[t].context === pNode){
+                                            var sNode = pNode;
+                                            seed[0][j].pNode = sNode ? sNode : null ;
+                                            s.push(seed[0][j]);
+                                            return;
+                                        }
+                                    }
+
+                                    var _pNode = pNode.parentNode;
+                                    if(!_pNode) return;
+
+                                    var getParentNode  = function(elem){
+                                        for(var x = 0;x<node.length;x++){
+                                            if(node[x].context === elem){
+                                                seed[0][j].pNode = elem ? elem : null ;
+                                                s.push(seed[0][j]);
+                                                return;
+                                            }
+                                        }
+
+                                        var _eNode = elem.parentNode;
+                                        if(!_eNode) return;
+                                        getParentNode(_eNode);
+                                    };
+                                    getParentNode(_pNode);
+
+                                }():function(){
+                                    var getNode = function(elem){
+                                        for(var t = 0;t < node.length;t++){
+                                            if(node[t].context === elem){
+                                                s.push(seed[0][j]);
+                                                return;
+                                            }
+                                        }
+
+                                        var nNode = elem.previousSibling;
+                                        if(!nNode)
+                                            return;
+
+                                        return getNode(nNode);
+                                    };
+
+                                    getNode(pNode);
+                                }();
+                            }
+
+                            seed.length = 0;
+                            seed.push(s);
+                            pt = type;
+                        }else{
+                            if((count === 0 || count === 1) && node){
+                                seed.push(node);
+                                count++;
+                                continue;
+                            }
+
+                            var s = []
+                            for(var j = 0;j<seed[0].length;j++){
+                                var node_context = seed[0][j].context;
+                                if(node_context.nodeName === (value).toUpperCase()){
+                                    s.push(seed[0][j]);
+                                }
+                            }
+
+                            seed.length = 0;
+                            seed.push(s);
+                        }
+
+                    }else if(type in Selector.Expr.relative){//关系符号
+                        flag = Selector.Expr.relative[type].dir;
+                        pt = type;
+                    }
+
+                    count++;
+                }
+
+                return seed;
+            },
+
+            getNodeFromLTOR : function(tokens){
+                var i,token,type,seed = [],flag="",pt="",value,parentToken,childType = "",ptNode;
+                i = tokens.length;
+                var x = 0,count = 0,f = 0;
+
+                for(;x<i;x++){
+                    token = tokens[x];
+                    type = token.type;
+                    value = token.value;
+
+                    if(type in Selector.filter){
+                        if(count === 0 && type === "PSEUDO") break;
+                        var node;
+                        if(type === "PSEUDO"){
+                            count++;
+                            f++;
+                            childType = type;
+                            if(f === 1){
+                                node = Selector.filter[childType]()(ptNode[0],parentToken,token);
+                            }else{
+                                node = Selector.filter[childType]()(seed[0][0],parentToken,token);
+                            }
+
+                            ptNode = node;
+                        }else{
+                            node = Selector.filter[type](value)();
+                            ptNode = node;
+                            parentToken = token;
+                        }
+
+                        flag = flag ? (flag === "parentNode" ? (flag = "childNode"):(flag === "previousSibling" ? (flag = "nextSibling"):"")) : "";
+
+                        (flag === "childNode" || flag === "nextSibling" ) ? function(){
+                             var s = [];
+                             flag === "childNode" ? function(){
+                                var getParentNode = function(elem,isDeep){
+                                    var pNode = elem.parentNode;
+                                    if(!pNode) return;
+                                    for(var j = 0;j<seed[0].length;j++){
+                                        if(seed[0][j].context === pNode){
+                                            elem.pNode = pNode ? pNode : null ;
+                                            s.push({"context":elem,value:pt});
+                                            return;
+                                        }
+                                    }
+
+                                    if(isDeep){
+                                        getParentNode(pNode);
+                                    }
+                                };
+
+                                for(var l = 0;l<node.length;l++){
+                                    var cNode = node[l];
+                                    if(!cNode) continue;
+                                    if(childType === "PSEUDO"){
+                                        getParentNode(cNode.context,false);
+                                    }else{
+                                        getParentNode(cNode.context,true);
+                                    }
+                                }
+
+
+
+                            }():function(){
+
+                            }();
+
+                            seed.length = 0;
+                            seed.push(s);
+                            pt = type;
+                            childType = type;
+                        }():function(){
+                            if(count === 0 && node){
+                                seed.push(node);
+                                count++;
+                                return;
+                            }
+
+                           /* var s = [];
+                            for(var j = 0;j<seed[0].length;j++){
+                                var node_context = seed[0][j].context;
+                                (var k = 0;k<node.length;k++){
+                                    if(node_context === node[k].context){
+                                        s.push(seed[0][j]);
+                                    }
+                                }
+                            }
+
+                            seed.length = 0;
+                            seed.push(s);*/
+                            seed.length = 0;
+                            seed.push(node);
+                        }();
+
+
+
+
+
+
+
+
+                    }else if(type in Selector.Expr.relative){//关系符号
+                        flag = Selector.Expr.relative[type].dir;
+                        pt = type;
+                    }
+                }
+
+                return seed;
+            },
+
             select:function(){
                 return function(selector,tokens){
                     if(tokens.length == 0){
                         return [];
                     }
 
-                    var i,token,type,seed = [],flag="",pt="",value,childToken,childType = "";
-                    //i = Selector.Expr.needsContext().test( selector ) ? 0 : tokens.length;
-                    i = tokens.length;
-                    var count = 0;
-                    while(i--){
-                        token = tokens[i];
-                        type = token.type;
-                        value = token.value;
-                        if((!seed[0] || seed[0].length == 0) && count != 0 && childType !== "PSEUDO"){
-                            count++;
-                            continue;
+                    var hasPseduo = false;
+                    for(var i = 0;i<tokens.length;i++){
+                        var token = tokens[i];
+                        var type = token.type;
+                        if(type === "PSEUDO"){
+                            hasPseduo = true;
+                            break;
                         }
-
-                        if(type in Selector.filter){
-                            if(type === "PSEUDO"){
-                                count++;
-                                childToken = token;
-                                childType = type;
-                                continue;
-                            }
-
-                            var node = Selector.filter[type](value)();
-                            if(childToken){
-                                node = Selector.filter[childType]()(node,token,childToken);
-                            }
-                            if(flag === "parentNode" || flag === "previousSibling" ){
-                                var s = [];
-                                for(var j = 0;j<seed[0].length;j++){
-                                    var node_context = seed[0][j].context;
-                                    var pNode;
-
-                                    if(flag === "parentNode"){
-                                        if(pt in Selector.Expr.relative){
-                                            pNode = seed[0][j].pNode?seed[0][j].pNode.parentNode:node_context.parentNode;
-                                        }else{
-                                            pNode = seed[0][j].pNode;
-                                        }
-
-                                    }else{
-                                        pNode = node_context.previousSibling;
-                                    }
-
-                                    if(!pNode)
-                                        continue;
-
-                                    flag === "parentNode" ? function(){
-                                        for(var t = 0;t < node.length;t++){
-                                            if(node[t].context === pNode){
-                                                var sNode = pNode;
-                                                seed[0][j].pNode = sNode ? sNode : null ;
-                                                s.push(seed[0][j]);
-                                                return;
-                                            }
-                                        }
-
-                                        var _pNode = pNode.parentNode;
-                                        if(!_pNode) return;
-
-                                        var getParentNode  = function(elem){
-                                            for(var x = 0;x<node.length;x++){
-                                                if(node[x].context === elem){
-                                                    seed[0][j].pNode = elem ? elem : null ;
-                                                    s.push(seed[0][j]);
-                                                    return;
-                                                }
-                                            }
-
-                                            var _eNode = elem.parentNode;
-                                            if(!_eNode) return;
-                                            getParentNode(_eNode);
-                                        };
-                                        getParentNode(_pNode);
-
-                                    }():function(){
-                                        var getNode = function(elem){
-                                            for(var t = 0;t < node.length;t++){
-                                                if(node[t].context === elem){
-                                                    s.push(seed[0][j]);
-                                                    return;
-                                                }
-                                            }
-
-                                            var nNode = elem.previousSibling;
-                                            if(!nNode)
-                                                return;
-
-                                            return getNode(nNode);
-                                        };
-
-                                        getNode(pNode);
-                                    }();
-                                }
-
-                                seed.length = 0;
-                                seed.push(s);
-                                pt = type;
-                            }else{
-                                if((count === 0 || count === 1) && node && childType === "PSEUDO"){
-                                    seed.push(node);
-                                    count++;
-                                    childType = type;
-                                    continue;
-                                }
-
-                                var s = []
-                                for(var j = 0;j<seed[0].length;j++){
-                                    var node_context = seed[0][j].context;
-                                    if(node_context.nodeName === (value).toUpperCase()){
-                                        s.push(seed[0][j]);
-                                    }
-                                }
-
-                                seed.length = 0;
-                                seed.push(s);
-                            }
-
-                            childType = type;
-                        }else if(type in Selector.Expr.relative){//关系符号
-                            flag = Selector.Expr.relative[type].dir;
-                            pt = type;
-                            childType = type;
-                        }
-
-                        count++;
                     }
 
-                    return seed;
+                    if(hasPseduo){
+                        return Selector.getNodeFromLTOR(tokens);
+                    }else{
+                        return Selector.getNodeFromRTOL(tokens);
+                    }
                 }
             },
 
