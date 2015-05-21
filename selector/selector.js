@@ -97,9 +97,11 @@
                 }
             },
 
+            type:['only-child','first','first-child','last','last-child','nth-child','odd','even'],
+
             filter:{
                 "ID":function(id){
-                    return function(elem){
+                    return function(match,elem){
                         elem = elem ? elem :((typeof document.getElementById(id) !== "undefined")?document.getElementById(id) : document.getAttributeNode(id));
                         var results = [];
                         if(!elem)
@@ -109,25 +111,33 @@
                         if(!isAttr)
                             return results;
 
+                        if(match){
+                            elem = Selector.getContextsByType(match,elem);
+                        }
+
                         results.push({
                             context:elem,
                             type:"ID",
                             value:id,
                             sep:"#"
                         });
-
                         return results;
                     }
                 },
 
                 "CLASS":function(className){
-                    return function(elem){
+                    return function(match,elem){
                         elem = elem ? elem : document;
                         var contexts = elem.getElementsByClassName(className);
                         var len = contexts.length,i = 0;
                         var results = [];
-                        if(!contexts.length)
+                        if(!contexts.length || contexts.length === 0)
                             return results;
+
+                        if(match){
+                            if(contexts.length === 0) return [];
+                            contexts = Selector.getContextsByType(match,contexts);
+                        }
 
                         for(; i < len; i++){
                             results.push({
@@ -137,16 +147,24 @@
                                 value:className
                             });
                         }
-
                         return results;
                     }
                 },
 
                 "TAG":function(tagName){
-                    return function(elem){
+                    return function(match,elem){
                         elem = elem ? elem : document;
                         var _elem,tmp = [],i = 0;
                         var results = elem.getElementsByTagName(tagName);
+
+                        if(results.length == 0)
+                            return tmp;
+
+                        if(match){
+                            if(results.length === 0) return [];
+                            results = Selector.getContextsByType(match,results);
+                        }
+
                         if(tagName === "*"){
                             while ((_elem = results[i++])){
                                 if(_elem.nodeType === 1){
@@ -161,9 +179,6 @@
 
                             return tmp;
                         }
-
-                        if(results.length == 0)
-                            return tmp;
 
                         for(;i<results.length;i++){
                             tmp.push({
@@ -186,9 +201,52 @@
 
                 },
 
-                "PSEUDO":function(){
-                    return function(elem,pToken,token){
-                        if(!elem || !token || !pToken) return undefined;
+                "PSEUDO":function(type){
+                    return function(contexts,pToken,token){
+                        if(!contexts || !token || !pToken) return [];
+                        var result = [];
+                        var getResultNode = function(elems){
+                            for(var k =0;k<elems.length;k++){
+                                var _node = elems[k];
+                                if(!_node) continue;
+                                if(Selector.indexOf(result,_node.context) == -1){
+                                    result.push({
+                                        context:_node.context?_node.context:"",
+                                        type:_node.type,
+                                        sep:_node.sep,
+                                        value:_node.value
+                                    });
+                                }
+                            }
+                        };
+
+                        if(contexts.length === 0){
+                            var elems = Selector.filter[pToken.type](pToken.value)(token.value);
+                            if(elems.length === 0) return [];
+                            getResultNode(elems);
+                        }else{
+                            if(!contexts[0] || contexts[0].length === 0) return result;
+                            Selector.isArray(contexts[0]) ? function(){
+                                var i = 0,len = contexts[0].length,nodes = [];
+                                for(;i<len;i++){
+                                    var node = contexts[i][0];
+                                    if(!node || !node.context) continue;
+                                    var elems = Selector.filter[pToken.type](pToken.value)(token.value,node.context);
+                                    if(elems.length === 0) continue;
+
+                                    getResultNode(elems);
+                                }
+                            }():function(){
+                                var elems = Selector.filter[pToken.type](pToken.value)(token.value);
+                                if(elems.length === 0) return [];
+                                getResultNode(elems);
+                            }();
+                        }
+
+                        return result;
+
+                       /* var elem = contexts;
+                        //var elem = Selector.getContextsByType(type,contexts);
                         var match = token.value;
                         var nodes = [];
                         var getNodes = function(result){
@@ -227,7 +285,7 @@
                             }
                         }():getPlanObjectNode();
 
-                        return nodes;
+                        return nodes;*/
                     };
                 }
             }
@@ -237,6 +295,140 @@
         Selector.extend({
             error:function(message){
                 throw new Error(message);
+            },
+
+            getNodeByPC:function(contexts){
+                var s = [];
+                //判断节点中有没有子父节点关系
+                var getNewNode = function(elem1,elem2){
+                    if((elem1.hasChildNodes() && elem2.hasChildNodes()) && (!elem1.hasChildNodes() && !elem2.hasChildNodes())) return;
+                    var elemNode = (elem1.hasChildNodes())?elem2:elem1;
+                    var elems = (elem1.hasChildNodes())?elem1.childNodes : (elem2.hasChildNodes() ? elem2.childNodes:null);
+                    if(!elems) return;
+
+                    if((Selector.indexOf(elems,elemNode)) != -1){
+                        if(Selector.indexOf(s,elemNode) == -1){
+                            s.push(elemNode);
+                        }
+                        return;
+                    }
+
+                    var getNode = function(node1,node2){
+                        if(node1.hasChildNodes()){
+                            var pNode = node2.parentNode;
+                            if(!pNode) return;
+                            if((Selector.indexOf(node1,pNode)) != -1){
+                                if(Selector.indexOf(s,node2) == -1){
+                                    s.push(node2);
+                                }
+                                return;
+                            }
+                        }
+                    };
+
+                    getNode(elems,elemNode);
+                };
+
+                for(var i = 0;i<contexts.length;i++){
+                    var elem1 = contexts[i];
+                    if((i+1)>(contexts.length - 1)) break;
+                    var elem2 = contexts[i+1];
+                    if(!elem1 || !elem2 || !elem1.context || !elem2.context) continue;
+                    getNewNode(elem1.context,elem2.context);
+                }
+
+                var t = [];
+                if(s.length !== 0){
+                    for(var i = 0;i<contexts.length;i++){
+                        var node = contexts[i];
+                        if(!node) continue;
+                        if(Selector.indexOf(s,node) == -1){
+                            t.push(node);
+                        }
+                    }
+
+                    contexts.length = 0;
+                    contexts = t;
+                }
+                return contexts;
+            },
+
+            getContextsByType:function(type,contexts){
+                if(!type || Selector.indexOf(Selector.type,type) == -1 || !contexts) return undefined;
+
+                var nodes = [];
+                switch(type){
+                    case Selector.type[0]://only
+                          break;
+                    case Selector.type[1]://first
+                          Selector.isArray(contexts)? nodes.push(contexts[0]) : nodes.push(contexts);
+                          break;
+                    case Selector.type[2]://first-child
+                          Selector.isArray(contexts)? function(){
+                              var node = contexts[0];
+                              if(!node || !node.hasChildNodes()) return;
+                              var childNodes = node.childNodes;
+                              if(childNodes.length === 0) return;
+                              var i = 0,len = childNodes.length;
+                              for(;i<len;i++){
+                                  var _node = childNodes[i];
+                                  if(!_node) continue;
+                                  if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
+                                      nodes.push(_node);
+                                      return;
+                                  }
+                              }
+                          }() : [];
+                          break;
+                    case Selector.type[3]://last
+                          Selector.isArray(contexts)? nodes.push(contexts[contexts.length - 1]) : nodes.push(contexts);
+                          break;
+                    case Selector.type[4]://last-child
+                         Selector.isArray(contexts)? function(){
+                            var node = contexts[0];
+                            if(!node || !node.hasChildNodes()) return;
+                            var childNodes = node.childNodes;
+                            if(childNodes.length === 0) return;
+                            var len = childNodes.length, i = len - 1;
+                            for(;i>0;i--){
+                                var _node = childNodes[i];
+                                if(!_node) continue;
+                                if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
+                                    nodes.push(_node);
+                                    return;
+                                }
+                            }
+                         }() : [];
+                         break;
+                    case Selector.type[5]://nth-child
+                    case Selector.type[6]://odd
+                         Selector.isArray(contexts)? function(){
+                             if(contexts.length === 1){
+                                 return nodes.push(contexts);
+                             }
+
+                             var i = 0,len = contexts.length;
+                             for(;i<len;i++){
+                                 if(i % 2 !== 0 ){
+                                     nodes.push(contexts[i]);
+                                 }
+                             }
+                         }() : [];
+                         break;
+                    case Selector.type[7]://even
+                        Selector.isArray(contexts)? function(){
+                            if(contexts.length === 1)  return;
+                            var i = 0,len = contexts.length;
+                            for(;i<len;i++){
+                                if(i % 2 === 0 ){
+                                    nodes.push(contexts[i]);
+                                }
+                            }
+                        }() : [];
+                        break;
+                }
+
+                return nodes;
             },
 
             isArray : function(obj){
@@ -472,7 +664,7 @@
             child:function(elem,match){
                 var first,last,type = match,node;
                 switch (type){
-                    case "only"://如果某个元素是父元素中唯一的子元素，那将会被匹配,如果父元素中含有其他元素，那将不会被匹配。
+                    case Selector.type[0]://如果某个元素是父元素中唯一的子元素，那将会被匹配,如果父元素中含有其他元素，那将不会被匹配。
                         elem.hasChildNodes()?function(){
                             var nodes = elem.childNodes;
                             var onlyNode;
@@ -496,9 +688,9 @@
                         }():node = undefined;
                         break;
 
-                    case "first":
+                    case Selector.type[1]:
 
-                    case "first-child":
+                    case Selector.type[2]:
                          elem.hasChildNodes()?function(){
                              var getFirstChildNode = function(nNode){
                                  var childNodes = nNode.childNodes;
@@ -519,9 +711,9 @@
                          }():node = undefined;
                          break;
 
-                    case "last":
+                    case Selector.type[3]:
 
-                    case "last-child":
+                    case Selector.type[4]:
                         elem.hasChildNodes()?function(){
                             var getLastChildNode = function(nNode){
                                 var childNodes = nNode.childNodes;
@@ -541,7 +733,8 @@
                             getLastChildNode(elem);
                         }():node = undefined;
                         break;
-                    case "nth":
+                    case Selector.type[5]:
+                    case Selector.type[6]:
 
                 }
 
@@ -881,9 +1074,9 @@
             },
 
             getNodeFromLTOR : function(tokens){
-                var i,token,type,seed = [],flag="",pt="",value,parentToken,childType = "",ptNode;
+                var i,token,type,seed = [],flag="",pt="",value,parentToken,childType = "";
                 i = tokens.length;
-                var x = 0,count = 0,f = 0;
+                var x = 0,count = 0;
 
                 for(;x<i;x++){
                     token = tokens[x];
@@ -895,95 +1088,122 @@
                         var node;
                         if(type === "PSEUDO"){
                             count++;
-                            f++;
                             childType = type;
-                            if(f === 1){
-                                node = Selector.filter[childType]()(ptNode[0],parentToken,token);
-                            }else{
-                                node = Selector.filter[childType]()(seed[0][0],parentToken,token);
-                            }
+                            if(childType === "PSEUDO" && flag !== "parentNode" && flag !== "previousSibling" )
+                                node = Selector.filter[childType](value)(seed,parentToken,token);
 
-                            ptNode = node;
-                        }else{
-                            node = Selector.filter[type](value)();
-                            ptNode = node;
-                            parentToken = token;
-                        }
-
-                        flag = flag ? (flag === "parentNode" ? (flag = "childNode"):(flag === "previousSibling" ? (flag = "nextSibling"):"")) : "";
-
-                        (flag === "childNode" || flag === "nextSibling" ) ? function(){
-                             var s = [];
-                             flag === "childNode" ? function(){
-                                var getParentNode = function(elem,isDeep){
-                                    var pNode = elem.parentNode;
-                                    if(!pNode) return;
-                                    for(var j = 0;j<seed[0].length;j++){
-                                        if(seed[0][j].context === pNode){
-                                            elem.pNode = pNode ? pNode : null ;
-                                            s.push({"context":elem,value:pt});
-                                            return;
-                                        }
+                            flag = flag ? (flag === "parentNode" ? (flag = "childNode"):(flag === "previousSibling" ? (flag = "nextSibling"):"")) : "";
+                            (flag === "childNode" || flag === "nextSibling" ) ? function(){
+                                var s = [];
+                                flag === "childNode" ? function(){
+                                    node = Selector.filter[childType](value)(seed,parentToken,token);
+                                    if(node){
+                                        seed.length = 0;
+                                        seed.push(node);
                                     }
 
-                                    if(isDeep){
-                                        getParentNode(pNode);
-                                    }
-                                };
+                                }():function(){
 
-                                for(var l = 0;l<node.length;l++){
-                                    var cNode = node[l];
-                                    if(!cNode) continue;
-                                    if(childType === "PSEUDO"){
-                                        getParentNode(cNode.context,false);
-                                    }else{
-                                        getParentNode(cNode.context,true);
-                                    }
-                                }
+                                }();
 
-
-
+                                pt = type;
                             }():function(){
-
+                                if(count === 0 && node){
+                                    seed.push(node);
+                                    count++;
+                                    return;
+                                }
+                                if(node){
+                                    seed.length = 0;
+                                    seed.push(node);
+                                }
                             }();
-
-                            seed.length = 0;
-                            seed.push(s);
-                            pt = type;
-                            childType = type;
-                        }():function(){
-                            if(count === 0 && node){
-                                seed.push(node);
-                                count++;
-                                return;
-                            }
-
-                           /* var s = [];
-                            for(var j = 0;j<seed[0].length;j++){
-                                var node_context = seed[0][j].context;
-                                (var k = 0;k<node.length;k++){
-                                    if(node_context === node[k].context){
-                                        s.push(seed[0][j]);
-                                    }
+                        }else{
+                            //node = Selector.filter[type](value)();
+                            var pf = false;
+                            var isRelative = false;
+                            var p = x + 1;
+                            if(p <= (i - 1)){
+                                var tk = tokens[p];
+                                if(tk){
+                                   var tk_type = tk.type;
+                                   if(tk_type === "PSEUDO"){
+                                       pf = true;
+                                   }
+                                   /*if(tk.value in Selector.Expr.relative){
+                                       isRelative = true;
+                                   }*/
                                 }
                             }
 
-                            seed.length = 0;
-                            seed.push(s);*/
-                            seed.length = 0;
-                            seed.push(node);
-                        }();
+                            if(pf){
+                                parentToken = token;
+                                count++;
+                                continue;
+                            }else{
+                                var t_node = Selector.filter[type](value)();
+                                if(t_node.length > 0){
+                                    if(seed.length === 0){
+                                        seed.push(t_node);
+                                    }else{
+                                        if(flag === "parentNode" || flag === "previousSibling"){
+                                            flag === "parentNode" ? function(){
+                                                var s = [];
+                                                var getParentNode  = function(node,elem,type,value){
+                                                    for(var t = 0;t<seed[0].length;t++){
+                                                        if(!seed[0] || !seed[0][t]) continue;
+                                                        if(elem === seed[0][t].context){
+                                                            s.push({"context":node,sep:seed[0][t].sep,type:type,value:value});
+                                                            return;
+                                                        }
+                                                    }
+                                                    var _eNode = elem.parentNode;
+                                                    if(!_eNode) return;
+                                                    getParentNode(node,_eNode,type,value);
+                                                };
 
+                                                for(var n = 0;n<t_node.length;n++){
+                                                    var _t_node = t_node[n];
+                                                    if(!_t_node || !_t_node.context) continue;
+                                                    var pNode = _t_node.context.parentNode;
+                                                    if(!pNode) continue;
+                                                    getParentNode(_t_node.context,pNode,_t_node.type,_t_node.value);
+                                                }
 
+                                                seed.length = 0;
+                                                seed.push(s);
+                                            }():function(){
 
+                                            }();
+                                        }else{
+                                            var s = [];
+                                            for(var n = 0;n<t_node.length;n++){
+                                                var _t_node = t_node[n];
+                                                if(!_t_node || !_t_node.context) continue;
 
+                                                for(var t = 0;t<seed[0].length;t++){
+                                                    if(!seed[0] || !seed[0][t]) continue;
+                                                    if(_t_node.context === seed[0][t].context){
+                                                        s.push(seed[0][t]);
+                                                    }
+                                                }
+                                            }
 
+                                            seed.length = 0;
+                                            seed.push(s);
+                                        }
 
+                                    }
+                                }
 
+                            }
+
+                        }
 
                     }else if(type in Selector.Expr.relative){//关系符号
                         flag = Selector.Expr.relative[type].dir;
                         pt = type;
+                        childType = type;
                     }
                 }
 
@@ -1006,11 +1226,18 @@
                         }
                     }
 
+                    var seed = [];
                     if(hasPseduo){
-                        return Selector.getNodeFromLTOR(tokens);
+                        seed = Selector.getNodeFromLTOR(tokens);
                     }else{
-                        return Selector.getNodeFromRTOL(tokens);
+                        seed = Selector.getNodeFromRTOL(tokens);
                     }
+
+                    if(seed.length === 0 || !seed[0]) return seed;
+                    var ret = Selector.getNodeByPC(seed[0]);
+                    seed.length = 0;
+                    seed.push(ret);
+                    return seed;
                 }
             },
 
