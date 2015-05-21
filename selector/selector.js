@@ -209,7 +209,17 @@
                             for(var k =0;k<elems.length;k++){
                                 var _node = elems[k];
                                 if(!_node) continue;
-                                if(Selector.indexOf(result,_node.context) == -1){
+                                var f = false;
+                                for(var i = 0;i<result.length;i++){
+                                    var tNode = result[i];
+                                    if(!tNode || !tNode.context) continue;
+                                    if(tNode === _node.context){
+                                        f=true;
+                                        break;
+                                    }
+                                }
+                                
+                                if(!f){
                                     result.push({
                                         context:_node.context?_node.context:"",
                                         type:_node.type,
@@ -229,7 +239,7 @@
                             Selector.isArray(contexts[0]) ? function(){
                                 var i = 0,len = contexts[0].length,nodes = [];
                                 for(;i<len;i++){
-                                    var node = contexts[i][0];
+                                    var node = contexts[0][i];
                                     if(!node || !node.context) continue;
                                     var elems = Selector.filter[pToken.type](pToken.value)(token.value,node.context);
                                     if(elems.length === 0) continue;
