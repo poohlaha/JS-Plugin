@@ -116,7 +116,7 @@
                         }
 
                         results.push({
-                            context:elem,
+                            context:match?elem[0]:elem,
                             type:"ID",
                             value:id,
                             sep:"#"
@@ -218,7 +218,7 @@
                                         break;
                                     }
                                 }
-                                
+
                                 if(!f){
                                     result.push({
                                         context:_node.context?_node.context:"",
@@ -254,48 +254,6 @@
                         }
 
                         return result;
-
-                       /* var elem = contexts;
-                        //var elem = Selector.getContextsByType(type,contexts);
-                        var match = token.value;
-                        var nodes = [];
-                        var getNodes = function(result){
-                            if(result){
-                                var flag = false;
-                                for(var i = 0;i<nodes.length;i++){
-                                    var node = nodes[i];
-                                    if(node.context === result){
-                                        flag = true;
-                                        break;
-                                    }
-                                }
-                                if(!flag){
-                                    nodes.push({
-                                        context:result?result:"",
-                                        type:"NODE"
-                                    });
-                                }
-                            }
-                        };
-
-                        var getPlanObjectNode = function(){
-                            elem = elem[0] || elem;
-                            var node = elem.context;
-                            var result = Selector.child(node,match);
-                            getNodes(result);
-                        };
-
-                        Selector.isArray(elem) ? function(){
-                            var i = 0,len = elem.length;
-                            for(;i<len;i++){
-                                var node = elem[i];
-                                if(!node || !node.context) continue;
-                                var result = Selector.child(node.context,match);
-                                getNodes(result);
-                            }
-                        }():getPlanObjectNode();
-
-                        return nodes;*/
                     };
                 }
             }
@@ -1204,6 +1162,9 @@
                                         }
 
                                     }
+                                }else{
+                                    seed.length = 0;
+                                    return seed;
                                 }
 
                             }
