@@ -322,7 +322,7 @@
             },
 
             getContextsByType:function(type,contexts){
-                if(!type || Selector.indexOf(Selector.type,type) == -1 || !contexts) return undefined;
+                if(!type || Selector.indexOf(Selector.type,type) == -1 || !contexts) return [];
 
                 var nodes = [];
                 switch(type){
@@ -332,10 +332,8 @@
                           Selector.isArray(contexts)? nodes.push(contexts[0]) : nodes.push(contexts);
                           break;
                     case Selector.type[2]://first-child
-                          Selector.isArray(contexts)? function(){
-                              var node = contexts[0];
-                              if(!node || !node.hasChildNodes()) return;
-                              var childNodes = node.childNodes;
+                          var getNode = function(elem){
+                              var childNodes = elem.childNodes;
                               if(childNodes.length === 0) return;
                               var i = 0,len = childNodes.length;
                               for(;i<len;i++){
@@ -346,27 +344,36 @@
                                       return;
                                   }
                               }
-                          }() : [];
+                          };
+                          Selector.isArray(contexts)? function(){
+                              var node = contexts[0];
+                              if(!node || !node.hasChildNodes()) return;
+                              getNode(node);
+                          }() : getNode(contexts);
                           break;
                     case Selector.type[3]://last
                           Selector.isArray(contexts)? nodes.push(contexts[contexts.length - 1]) : nodes.push(contexts);
                           break;
                     case Selector.type[4]://last-child
+                         var getNode = function(elem){
+                             var childNodes = elem.childNodes;
+                             if(childNodes.length === 0) return;
+                             var len = childNodes.length, i = len - 1;
+                             for(;i>0;i--){
+                                 var _node = childNodes[i];
+                                 if(!_node) continue;
+                                 if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
+                                     nodes.push(_node);
+                                     return;
+                                 }
+                             }
+                         };
+
                          Selector.isArray(contexts)? function(){
                             var node = contexts[0];
                             if(!node || !node.hasChildNodes()) return;
-                            var childNodes = node.childNodes;
-                            if(childNodes.length === 0) return;
-                            var len = childNodes.length, i = len - 1;
-                            for(;i>0;i--){
-                                var _node = childNodes[i];
-                                if(!_node) continue;
-                                if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
-                                    nodes.push(_node);
-                                    return;
-                                }
-                            }
-                         }() : [];
+                            getNode(node);
+                         }() : getNode(contexts);;
                          break;
                     case Selector.type[5]://nth-child
                     case Selector.type[6]://odd
@@ -1044,7 +1051,7 @@
             getNodeFromLTOR : function(tokens){
                 var i,token,type,seed = [],flag="",pt="",value,parentToken,childType = "";
                 i = tokens.length;
-                var x = 0,count = 0;
+                var x = 0,count = 0,f = 0;
 
                 for(;x<i;x++){
                     token = tokens[x];
@@ -1088,8 +1095,9 @@
                             }();
                         }else{
                             //node = Selector.filter[type](value)();
+                            if(seed.length === 0 && f !==0) return seed;
+                            if((!seed[0] || seed[0].length === 0) && f !==0) return seed;
                             var pf = false;
-                            var isRelative = false;
                             var p = x + 1;
                             if(p <= (i - 1)){
                                 var tk = tokens[p];
@@ -1111,8 +1119,9 @@
                             }else{
                                 var t_node = Selector.filter[type](value)();
                                 if(t_node.length > 0){
-                                    if(seed.length === 0){
+                                    if(seed.length === 0 && f === 0){
                                         seed.push(t_node);
+                                        f++;
                                     }else{
                                         if(flag === "parentNode" || flag === "previousSibling"){
                                             flag === "parentNode" ? function(){
