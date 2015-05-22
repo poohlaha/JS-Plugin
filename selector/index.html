@@ -7,28 +7,35 @@
     <title></title>
     <script>
         $(function(){
-            $("div#test > #test2").find(".cls2").each(function(){
+            $("div#test > p input.cls,div#test > div input.cls4").each(function(i,j){
+                $(this).val('xxxx,yyyyy');
+            });
+
+            $("div#test p").next("div input.cls2").each(function(){
                 $(this).val("dadasd");
             });
+
+            $("div#test p input.cls2").data("b",{key:2222,value:22222});
+            $("div#test p input.cls2").removeData("b");
+            console.log($("div#test p input.cls2").data("b"));
+            
+            $("div:last-child a:first-child .cls4");
         });
     </script>
 </head>
 <body>
 <div id="test">
-    <p>
-        <input class="cls" value="1111" id="name"><br/>
-        <input class="cls" value="2222" id="pwd"><br/>
-        <input class="cls2" value="3333" id="info">
-    </p>
-
     <div id = "test2">
         <input class="cls2" value="4444" id="title"><br/>
         <input class="cls3" value="6666" id="psd"><br/>
         <input class="cls3" value="7777" id="text"><br/>
         <input class="cls4" value="8888" id="date"><br/>
         <span id="testx">
-            <input class="cls4" value="0000" id="datse"><br/>
-            <input class="cls4" value="1000" id="sdesd"><br/>
+            <span>
+                <!--input text-->
+                <input class="cls4" value="0000" id="datse"><br/>
+                <input class="cls4" value="1000" id="sdesd"><br/>
+            </span>
         </span>
 
         <span id="testy">
@@ -37,7 +44,19 @@
         </span>
     </div>
 
+    <p>
+        <input class="cls" value="1111" id="name"><br/>
+        <input class="cls" value="2222" id="pwd"><br/>
+        <input class="cls2" value="3333" id="info">
+    </p>
+
     <input class = "cls5" value="9999" id="teste"/>
+    <span id="testz">
+        <a>
+            <input class="cls5" value="2000" id="indtsd"><br/>
+            <input class="cls5" value="3000" id="tedtsd">
+        </a>
+    </span>
 </div>
 </body>
 </html>
