@@ -136,7 +136,7 @@
 
                         if(match){
                             if(contexts.length === 0) return [];
-                            contexts = Selector.getContextsByType(match,contexts);
+                            contexts = Selector.getContextsByType(match,contexts,elem);
                         }
 
                         for(; i < len; i++){
@@ -162,7 +162,7 @@
 
                         if(match){
                             if(results.length === 0) return [];
-                            results = Selector.getContextsByType(match,results);
+                            results = Selector.getContextsByType(match,results,elem);
                         }
 
                         if(tagName === "*"){
@@ -321,13 +321,35 @@
                 return contexts;
             },
 
-            getContextsByType:function(type,contexts){
+            getContextsByType:function(type,contexts,elem){
                 if(!type || Selector.indexOf(Selector.type,type) == -1 || !contexts) return [];
 
                 var nodes = [];
                 switch(type){
-                    case Selector.type[0]://only
-                          break;
+                    case Selector.type[0]://only-child
+                            var i = 0,len = contexts.length;
+                            for(;i<len;i++){
+                                var _node = contexts[i];
+                                if(!_node) continue;
+                                var count = 0;
+                                if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
+                                    if(!_node.hasChildNodes()) continue;
+                                    var childNodes = _node.childNodes;
+                                    for(var j = 0;j<childNodes.length;j++){
+                                        var _cNode = childNodes[j];
+                                        if(_cNode.nodeType === 1 && _cNode.nodeName != "#text" &&  _cNode.nodeName != "#BR"){
+                                            if(count >= 2) break;
+                                            count++;
+                                        }
+                                    }
+
+                                    if(count === 1){
+                                        nodes.push(_node);
+                                    }
+                                }
+                            }
+
+                            break;
                     case Selector.type[1]://first
                           Selector.isArray(contexts)? nodes.push(contexts[0]) : nodes.push(contexts);
                           break;
@@ -377,29 +399,62 @@
                          break;
                     case Selector.type[5]://nth-child
                     case Selector.type[6]://odd
-                         Selector.isArray(contexts)? function(){
-                             if(contexts.length === 1){
-                                 return nodes.push(contexts);
-                             }
+                         if(elem){
+                            Selector.isArray(contexts)? function(){
+                                if(contexts.length === 1)  return;
+                                if(!elem.hasChildNodes()) return;
+                                var elemContexts = elem.childNodes;
+                                var i = 0,len = contexts.length;
+                                for(;i<len;i++){
+                                    if(Selector.indexOf(elemContexts,contexts[i]) != -1){
+                                        if(Selector.indexOf(nodes,contexts[i]) == -1){
+                                            nodes.push(contexts[i]);
+                                        }
+                                    }
+                                }
 
-                             var i = 0,len = contexts.length;
-                             for(;i<len;i++){
-                                 if(i % 2 !== 0 ){
-                                     nodes.push(contexts[i]);
-                                 }
-                             }
-                         }() : [];
+                                if(nodes.length === 0) return;
+                                var results = [];
+                                for(var j =0;j<nodes.length;j++){
+                                    if(j % 2 != 0 ){
+                                        if(Selector.indexOf(results,nodes[j]) == -1)
+                                            results.push(nodes[j]);
+                                    }
+                                }
+
+                                nodes.length = 0;
+                                nodes = results;
+                            }() : [];
+                         }
                          break;
                     case Selector.type[7]://even
-                        Selector.isArray(contexts)? function(){
-                            if(contexts.length === 1)  return;
-                            var i = 0,len = contexts.length;
-                            for(;i<len;i++){
-                                if(i % 2 === 0 ){
-                                    nodes.push(contexts[i]);
+                        if(elem){
+                            Selector.isArray(contexts)? function(){
+                                if(contexts.length === 1)  return;
+                                if(!elem.hasChildNodes()) return;
+                                var elemContexts = elem.childNodes;
+                                var i = 0,len = contexts.length;
+                                for(;i<len;i++){
+                                    if(Selector.indexOf(elemContexts,contexts[i]) != -1){
+                                        if(Selector.indexOf(nodes,contexts[i]) == -1){
+                                            nodes.push(contexts[i]);
+                                        }
+                                    }
                                 }
-                            }
-                        }() : [];
+
+                                if(nodes.length === 0) return;
+                                var results = [];
+                                for(var j =0;j<nodes.length;j++){
+                                    if(j % 2 == 0 ){
+                                        if(Selector.indexOf(results,nodes[j]) == -1)
+                                            results.push(nodes[j]);
+                                    }
+                                }
+
+                                nodes.length = 0;
+                                nodes = results;
+                            }() : [];
+                        }
                         break;
                 }
 
