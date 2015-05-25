@@ -1133,6 +1133,15 @@
                                     }
 
                                 }():function(){
+                                    if(seed.length === 0 || !seed[0]|| !parentToken) return;
+
+                                    node = Selector.filter[parentToken.type](parentToken.value)(token.value);
+                                    if(!node || node.length === 0){
+                                        seed.length = 0;
+                                        return;
+                                    }
+
+                                    Selector.getPrevNodeFromLTOR(node,seed);
 
                                 }();
 
@@ -1205,7 +1214,7 @@
                                                 seed.length = 0;
                                                 seed.push(s);
                                             }():function(){
-
+                                                Selector.getPrevNodeFromLTOR(t_node,seed);
                                             }();
                                         }else{
                                             var s = [];
@@ -1243,6 +1252,60 @@
                 }
 
                 return seed;
+            },
+
+            getPrevNodeFromLTOR :function(node,seed){
+                var x = [];
+                var pNode;
+                var getNode = function(elem,sep,type,value,newNode){
+                    pNode = newNode?newNode.previousSibling:node[0].context.previousSibling;
+                    if(!pNode) return;
+                    if(pNode.nodeType === 1 && pNode.nodeName !== "#text" && pNode.nodeName !== "#BR"){
+                    }else{
+                        getNode(elem,sep,type,value,pNode);
+                    }
+
+                    for(var t = 0;t < seed[0].length;t++){
+                        if(seed[0][t].context === pNode){
+                            if(!judgeNode(x,elem.context)){
+                                x.push({"context":elem.context,sep:sep,type:type,value:value});
+                                return;
+                            }
+                            return;
+                        }
+                    }
+
+                    getNode(elem,sep,type,value,pNode);
+                };
+
+                var judgeNode = function(ret,elem){
+                    if(ret.length === 0) return false;
+                    for(var i = 0;i<ret.length;i++){
+                        var i_node = ret[i];
+                        if(!i_node || !i_node.context) continue;
+                        if(i_node.context === elem){
+                            return true;
+                        }
+                    }
+
+                    return false;
+                };
+
+                for(var k =0;k<node.length;k++){
+                    var k_node = node[k];
+                    if(!k_node) continue;
+                    getNode(k_node,k_node.sep,k_node.type,k_node.value);
+                }
+
+                if(x.length === 0 ){
+                    seed.length = 0;
+                    return;
+                }
+
+                if(x.length > 0){
+                    seed.length = 0;
+                    seed.push(x);
+                }
             },
 
             select:function(){
