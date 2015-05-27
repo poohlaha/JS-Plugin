@@ -450,7 +450,7 @@
                             }() : [];
                          }else{
                              if(!contexts.hasChildNodes()) return;
-                             var elemContexts = elem.childNodes;
+                             var elemContexts = contexts.childNodes;
                              var i = 0,len = elemContexts.length;
                              var results = [];
                              for(;i<len;i++){
@@ -459,6 +459,9 @@
                                          results.push(nodes[i]);
                                  }
                              }
+
+                             nodes.length = 0;
+                             nodes = results;
                          }
                          break;
                     case Selector.type[7]://even
@@ -490,7 +493,7 @@
                             }() : [];
                         }else{
                             if(!contexts.hasChildNodes()) return;
-                            var elemContexts = elem.childNodes;
+                            var elemContexts = contexts.childNodes;
                             var i = 0,len = elemContexts.length;
                             var results = [];
                             for(;i<len;i++){
@@ -499,6 +502,9 @@
                                         results.push(nodes[i]);
                                 }
                             }
+
+                            nodes.length = 0;
+                            nodes = results;
                         }
                         break;
                 }
