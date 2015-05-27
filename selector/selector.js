@@ -102,14 +102,37 @@
             filter:{
                 "ID":function(id){
                     return function(match,elem){
+                        var f = false;
+                        if(elem) f = true;
                         elem = elem ? elem :((typeof document.getElementById(id) !== "undefined")?document.getElementById(id) : document.getAttributeNode(id));
                         var results = [];
                         if(!elem)
                             return results;
 
                         var isAttr = (elem.getAttribute("id") === id) ? true : false;
-                        if(!isAttr)
-                            return results;
+                        if(!isAttr){
+                            var node = document.getElementById(id);//child node
+                            if(!node) return results;
+                            var flag = false;
+                            var getParentNode = function(_node){
+                                if(elem === _node && f){
+                                    flag = true;
+                                    return;
+                                }
+
+                                var _pNode = _node.parentNode;
+                                if(!_pNode) return;
+                                getParentNode(_pNode);
+                            };
+
+                            var pNode = node.parentNode;
+                            if(!pNode) return results;
+                            getParentNode(pNode);
+
+                            if(!flag) return results;
+                            elem = node;
+                        }
+
 
                         if(match){
                             elem = Selector.getContextsByType(match,elem);
@@ -425,6 +448,17 @@
                                 nodes.length = 0;
                                 nodes = results;
                             }() : [];
+                         }else{
+                             if(!contexts.hasChildNodes()) return;
+                             var elemContexts = elem.childNodes;
+                             var i = 0,len = elemContexts.length;
+                             var results = [];
+                             for(;i<len;i++){
+                                 if(i % 2 != 0 ){
+                                     if(Selector.indexOf(results,nodes[i]) == -1)
+                                         results.push(nodes[i]);
+                                 }
+                             }
                          }
                          break;
                     case Selector.type[7]://even
@@ -454,6 +488,17 @@
                                 nodes.length = 0;
                                 nodes = results;
                             }() : [];
+                        }else{
+                            if(!contexts.hasChildNodes()) return;
+                            var elemContexts = elem.childNodes;
+                            var i = 0,len = elemContexts.length;
+                            var results = [];
+                            for(;i<len;i++){
+                                if(i % 2 == 0 ){
+                                    if(Selector.indexOf(results,nodes[i]) == -1)
+                                        results.push(nodes[i]);
+                                }
+                            }
                         }
                         break;
                 }
