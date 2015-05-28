@@ -110,6 +110,30 @@
         }
     };
 
+    Pizzle.trim = function(text){
+        var LTrim = function(str){
+            var i;
+            for(i=0;i<str.length;i++)
+            {
+                if(str.charAt(i)!=" "&&str.charAt(i)!=" ")break;
+            }
+            str=str.substring(i,str.length);
+            return str;
+        }
+
+        var RTrim = function(str){
+            var i;
+            for(i=str.length-1;i>=0;i--)
+            {
+                if(str.charAt(i)!=" "&&str.charAt(i)!=" ")break;
+            }
+            str=str.substring(0,i+1);
+            return str;
+        }
+
+        return LTrim(RTrim(text));
+    };
+
     /**
      * participle many selectors
      * @param selector
@@ -131,7 +155,7 @@
             if((match = Express.expr.rcombinators.exec(str))!=null){
                 matched = match.shift();
                 tokens.push({
-                    value:matched == " " ? matched : matched.trim(),
+                    value:matched == " " ? matched : Pizzle.trim(matched),
                     type:match[0].replace(Express.expr.rtrim," ")
                 });
 
