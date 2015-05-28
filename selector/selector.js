@@ -138,12 +138,24 @@
                             elem = Selector.getContextsByType(match,elem);
                         }
 
-                        results.push({
-                            context:match?elem[0]:elem,
-                            type:"ID",
-                            value:id,
-                            sep:"#"
-                        });
+                        if(Selector.isArray(elem)){
+                            for(var i =0;i<elem.length;i++){
+                                results.push({
+                                    context:elem[i]?elem[i]:"",
+                                    type:"ID",
+                                    value:id,
+                                    sep:"#"
+                                });
+                            }
+                        }else{
+                            results.push({
+                                context:elem?elem:"",
+                                type:"ID",
+                                value:id,
+                                sep:"#"
+                            });
+                        }
+
                         return results;
                     }
                 },
@@ -355,12 +367,12 @@
                                 var _node = contexts[i];
                                 if(!_node) continue;
                                 var count = 0;
-                                if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
+                                if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "BR"){
                                     if(!_node.hasChildNodes()) continue;
                                     var childNodes = _node.childNodes;
                                     for(var j = 0;j<childNodes.length;j++){
                                         var _cNode = childNodes[j];
-                                        if(_cNode.nodeType === 1 && _cNode.nodeName != "#text" &&  _cNode.nodeName != "#BR"){
+                                        if(_cNode.nodeType === 1 && _cNode.nodeName != "#text" &&  _cNode.nodeName != "BR"){
                                             if(count >= 2) break;
                                             count++;
                                         }
@@ -384,7 +396,7 @@
                               for(;i<len;i++){
                                   var _node = childNodes[i];
                                   if(!_node) continue;
-                                  if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
+                                  if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "BR"){
                                       nodes.push(_node);
                                       return;
                                   }
@@ -407,7 +419,7 @@
                              for(;i>0;i--){
                                  var _node = childNodes[i];
                                  if(!_node) continue;
-                                 if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR"){
+                                 if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "BR"){
                                      nodes.push(_node);
                                      return;
                                  }
@@ -438,7 +450,7 @@
 
                                 if(nodes.length === 0) return;
                                 var results = [];
-                                for(var j =0;j<nodes.length;j++){
+                                for(var j = 1;j<=nodes.length;j++){
                                     if(j % 2 != 0 ){
                                         if(Selector.indexOf(results,nodes[j]) == -1)
                                             results.push(nodes[j]);
@@ -452,11 +464,21 @@
                              if(!contexts.hasChildNodes()) return;
                              var elemContexts = contexts.childNodes;
                              var i = 0,len = elemContexts.length;
-                             var results = [];
+                             var results = [],s = [];
                              for(;i<len;i++){
-                                 if(i % 2 != 0 ){
-                                     if(Selector.indexOf(results,nodes[i]) == -1)
-                                         results.push(nodes[i]);
+                                 if(elemContexts[i].nodeType === 1 && elemContexts[i].nodeName != "#text" &&  elemContexts[i].nodeName != "BR"){
+                                     if(Selector.indexOf(s,elemContexts[i]) == -1){
+                                         s.push(elemContexts[i]);
+                                     }
+                                 }
+                             }
+
+                             if(s.length === 0) return;
+
+                             for(var j = 0;j< s.length;j++){
+                                 if((j+1) % 2 != 0 ){
+                                     if(Selector.indexOf(results,s[j]) == -1)
+                                         results.push(s[j]);
                                  }
                              }
 
@@ -481,7 +503,7 @@
 
                                 if(nodes.length === 0) return;
                                 var results = [];
-                                for(var j =0;j<nodes.length;j++){
+                                for(var j = 1;j<=nodes.length;j++){
                                     if(j % 2 == 0 ){
                                         if(Selector.indexOf(results,nodes[j]) == -1)
                                             results.push(nodes[j]);
@@ -495,11 +517,21 @@
                             if(!contexts.hasChildNodes()) return;
                             var elemContexts = contexts.childNodes;
                             var i = 0,len = elemContexts.length;
-                            var results = [];
+                            var results = [],s = [];
                             for(;i<len;i++){
-                                if(i % 2 == 0 ){
-                                    if(Selector.indexOf(results,nodes[i]) == -1)
-                                        results.push(nodes[i]);
+                                if(elemContexts[i].nodeType === 1 && elemContexts[i].nodeName != "#text" &&  elemContexts[i].nodeName != "BR"){
+                                    if(Selector.indexOf(s,elemContexts[i]) == -1){
+                                        s.push(elemContexts[i]);
+                                    }
+                                }
+                            }
+
+                            if(s.length === 0) return;
+
+                            for(var j = 0;j< s.length;j++){
+                                if((j+1) % 2 == 0 ){
+                                    if(Selector.indexOf(results,s[j]) == -1)
+                                        results.push(s[j]);
                                 }
                             }
 
@@ -753,7 +785,7 @@
                             var count = 0;
                             for(var i = 0;i<nodes.length;i++){
                                 var _node = nodes[i];
-                                if(_node.nodeName == "#text" ||  _node.nodeName == "#BR") continue;
+                                if(_node.nodeName == "#text" ||  _node.nodeName == "BR") continue;
                                 count++;
                                 if(_node.nodeType === 1){
                                     onlyNode = _node;
@@ -783,7 +815,7 @@
                                     var _node = childNodes[i];
                                     if(!_node) continue;
 
-                                     if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR")
+                                     if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "BR")
                                          return node = _node;
                                  }
                              };
@@ -806,7 +838,7 @@
                                     var _node = childNodes[i];
                                     if(!_node) continue;
 
-                                    if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "#BR")
+                                    if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "BR")
                                         return node = _node;
                                 }
                             };
@@ -1313,7 +1345,7 @@
                 var getPNode = function(newNode){
                     pNode = newNode?newNode.previousSibling:node[0].context.previousSibling;
                     if(!pNode) return;
-                    if(pNode.nodeType === 1 && pNode.nodeName !== "#text" && pNode.nodeName !== "#BR"){
+                    if(pNode.nodeType === 1 && pNode.nodeName !== "#text" && pNode.nodeName !== "BR"){
                         return;
                     }else{
                         getPNode(pNode);
