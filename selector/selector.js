@@ -993,7 +993,7 @@
 
                         this.context = Selector.match()(this.groups,selector);
                     }
-                    
+
                     console?console.log(this):"";
                     return this;
                 }else if(selector.context && selector.context.nodeType && selector.context.nodeType === 1){//elem
@@ -1147,7 +1147,6 @@
 
                             flag = flag ? (flag === "parentNode" ? (flag = "childNode"):(flag === "previousSibling" ? (flag = "nextSibling"):"")) : "";
                             (flag === "childNode" || flag === "nextSibling" ) ? function(){
-                                var s = [];
                                 flag === "childNode" ? function(){
                                     node = Selector.filter[childType](value)(seed,parentToken,token);
                                     if(node){
