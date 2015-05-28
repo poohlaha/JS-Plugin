@@ -232,9 +232,10 @@
 
                 },
 
+                /*
                 "CHILD":function(type, what, argument, first, last){
 
-                },
+                },*/
 
                 "PSEUDO":function(type){
                     return function(contexts,pToken,token){
@@ -710,10 +711,28 @@
                 thisCache[elemKey] = ret;
             },
 
-            trim: function( text ) {
-                return text == null ?
-                    "" :
-                    ( text + "" ).replace( Selector.Expr.rtrim(), "" );
+            trim : function(text){
+                    var LTrim = function(str){
+                        var i;
+                        for(i=0;i<str.length;i++)
+                        {
+                            if(str.charAt(i)!=" "&&str.charAt(i)!=" ")break;
+                        }
+                        str=str.substring(i,str.length);
+                        return str;
+                    }
+
+                    var RTrim = function(str){
+                        var i;
+                        for(i=str.length-1;i>=0;i--)
+                        {
+                            if(str.charAt(i)!=" "&&str.charAt(i)!=" ")break;
+                        }
+                        str=str.substring(0,i+1);
+                        return str;
+                    }
+
+                    return LTrim(RTrim(text));
             },
 
             parseJSON:function(data){
@@ -772,86 +791,6 @@
                     data = data["data"];
                 }
                 return data;
-            },
-
-            child:function(elem,match){
-                var first,last,type = match,node;
-                switch (type){
-                    case Selector.type[0]://如果某个元素是父元素中唯一的子元素，那将会被匹配,如果父元素中含有其他元素，那将不会被匹配。
-                        elem.hasChildNodes()?function(){
-                            var nodes = elem.childNodes;
-                            var onlyNode;
-                            if(nodes.length === 0) return;
-                            var count = 0;
-                            for(var i = 0;i<nodes.length;i++){
-                                var _node = nodes[i];
-                                if(_node.nodeName == "#text" ||  _node.nodeName == "BR") continue;
-                                count++;
-                                if(_node.nodeType === 1){
-                                    onlyNode = _node;
-                                }
-
-                            }
-
-                            if(count != 1)
-                                return node = undefined;
-
-                            return node = onlyNode;
-
-                        }():node = undefined;
-                        break;
-
-                    case Selector.type[1]:
-
-                    case Selector.type[2]:
-                         elem.hasChildNodes()?function(){
-                             var getFirstChildNode = function(nNode){
-                                 var childNodes = nNode.childNodes;
-                                 if(childNodes.length === 0)
-                                    return;
-
-                                 var i = 0,len = childNodes.length;
-                                 for(;i<len;i++){
-                                    var _node = childNodes[i];
-                                    if(!_node) continue;
-
-                                     if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "BR")
-                                         return node = _node;
-                                 }
-                             };
-
-                             getFirstChildNode(elem);
-                         }():node = undefined;
-                         break;
-
-                    case Selector.type[3]:
-
-                    case Selector.type[4]:
-                        elem.hasChildNodes()?function(){
-                            var getLastChildNode = function(nNode){
-                                var childNodes = nNode.childNodes;
-                                if(childNodes.length === 0)
-                                    return;
-
-                                var len = childNodes.length,i = len - 1;
-                                for(i;i>0;i--){
-                                    var _node = childNodes[i];
-                                    if(!_node) continue;
-
-                                    if(_node.nodeType === 1 && _node.nodeName != "#text" &&  _node.nodeName != "BR")
-                                        return node = _node;
-                                }
-                            };
-
-                            getLastChildNode(elem);
-                        }():node = undefined;
-                        break;
-                    case Selector.type[5]:
-                    case Selector.type[6]:
-
-                }
-
-                return node;
             }
         });
 
@@ -1028,7 +967,7 @@
         Selector.extend({
             init:function(selector){
                 if(typeof selector === "string"){
-                    selector = selector.trim();
+                    selector = Selector.trim(selector);
                     if(!Selector.isQSA){
                         var contexts = document.querySelectorAll(selector);
                         var len = contexts.length,i = 0;
@@ -1054,7 +993,8 @@
 
                         this.context = Selector.match()(this.groups,selector);
                     }
-                    console.log(this);
+                    
+                    console?console.log(this):"";
                     return this;
                 }else if(selector.context && selector.context.nodeType && selector.context.nodeType === 1){//elem
                     var groups = [];
