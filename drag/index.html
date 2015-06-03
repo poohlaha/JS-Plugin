@@ -22,25 +22,24 @@
                 min:{left: 10, top: 10},
                 max:{left: 1400, top: 700},
                 scrollX:true,
-                scrollY:false
+                scrollY:true
             });
-            $("#drag2").drag();
+            /*$("#drag2").drag();
             $("#drag3").drag({
                 axis: 'x'
             });
             $("#drag4").drag({
-                axis: 'y',
-                scrollX:true,
-                scrollY:true
-            });
+                axis: 'y'
+            });*/
         });
     </script>
 </head>
 <body>
 
 <div id="drag1" class="box">xy:static</div>
+<!--
 <div id="drag2" class="box" style="z-index: auto; position: relative;">xy:relative</div>
 <div id="drag3" class="box" style="position: absolute;">x:absolute</div>
-<div id="drag4" class="box" style="position: fixed;top: 200px;right:200px;">y:fixed</div>
+<div id="drag4" class="box" style="position: fixed;top: 200px;right:200px;">y:fixed</div>-->
 </body>
 </html>

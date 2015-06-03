@@ -23,11 +23,16 @@
     $.fn.drag = function(options){
         options = $.extend({},defaults,options);
         if(!options) return;
-        if(options.scrollX) $(document.body).css({'overflow-x':'auto','overflow-y':'hidden'});
-        else $(document.body).css({'overflow-x':'hidden','overflow-y':'auto'});
 
-        if(options.scrollY) $(document.body).css({'overflow-y':'auto','overflow-x':'hidden'});
-        else $(document.body).css({'overflow-y':'hidden','overflow-x':'auto'});
+        if(!options.scrollX && !options.scrollY){
+            $(document.body).css({'overflow-x':'hidden','overflow-y':'hidden'});
+        }else if(options.scrollX && !options.scrollY){
+            $(document.body).css({'overflow-x':'auto','overflow-y':'hidden'});
+        }else if(!options.scrollX && options.scrollY){
+            $(document.body).css({'overflow-x':'hidden','overflow-y':'auto'});
+        }else{
+            $(document.body).css({'overflow-x':'auto','overflow-y':'auto'});
+        }
 
         return this.each(function() {
             var element = this,instance = $(element).data(datakey);
@@ -144,10 +149,10 @@
                 //window over drag
                 if(~options.isOverWindowDrag) {
                     var height,width;
-                    if(options.scrollX === true)
-                        height = window.innerHeight || document.documentElement.clientHeight;
-                    if(options.scrollY === true)
+                    if(!options.scrollX)
                         width = window.innerWidth || document.documentElement.clientWidth;
+                    if(!options.scrollY)
+                        height = window.innerHeight || document.documentElement.clientHeight;
 
                     if(to.left < 0) to.left = 0;
                     if(to.top < 0) to.top = 0;
