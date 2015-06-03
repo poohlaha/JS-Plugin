@@ -20,14 +20,18 @@
         $(function(){
             $("#drag1").drag({
                 min:{left: 10, top: 10},
-                max:{left: 1400, top: 700}
+                max:{left: 1400, top: 700},
+                scrollX:true,
+                scrollY:false
             });
             $("#drag2").drag();
             $("#drag3").drag({
                 axis: 'x'
             });
             $("#drag4").drag({
-                axis: 'y'
+                axis: 'y',
+                scrollX:true,
+                scrollY:true
             });
         });
     </script>

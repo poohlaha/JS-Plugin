@@ -11,7 +11,8 @@
             min: null,// 拖拽对象的最小位置，格式为{left: 10, top: 10}
             max: null,// 拖拽对象的最大位置，格式为{left: 1000, top: 1000}
             isOverWindowDrag:false,//是否超出window拖拽
-            scroll:false,
+            scrollX:false,
+            scrollY:false,
             zIndex: 9999,
             onDragBefore: $.noop,// 拖拽开始前回调
             onDragStart: $.noop,// 拖拽开始后回调
@@ -22,8 +23,12 @@
     $.fn.drag = function(options){
         options = $.extend({},defaults,options);
         if(!options) return;
-        if(options.scroll) $(document.body).css({"overflow":""});
-        else $(document.body).css({"overflow":"hidden"});
+        if(options.scrollX) $(document.body).css({'overflow-x':'auto','overflow-y':'hidden'});
+        else $(document.body).css({'overflow-x':'hidden','overflow-y':'auto'});
+
+        if(options.scrollY) $(document.body).css({'overflow-y':'auto','overflow-x':'hidden'});
+        else $(document.body).css({'overflow-y':'hidden','overflow-x':'auto'});
+
         return this.each(function() {
             var element = this,instance = $(element).data(datakey);
             if (!instance) {
@@ -138,12 +143,20 @@
 
                 //window over drag
                 if(~options.isOverWindowDrag) {
-                    var height = window.innerHeight || document.documentElement.clientHeight;
-                    var width = window.innerWidth || document.documentElement.clientWidth;
+                    var height,width;
+                    if(options.scrollX === true)
+                        height = window.innerHeight || document.documentElement.clientHeight;
+                    if(options.scrollY === true)
+                        width = window.innerWidth || document.documentElement.clientWidth;
+
                     if(to.left < 0) to.left = 0;
                     if(to.top < 0) to.top = 0;
-                    if((to.left + elemWidth)  > width) to.left = width - elemWidth;
-                    if((to.top + elemHeight) > height) to.top = height - elemHeight;
+                    if(width){
+                        if((to.left + elemWidth)  > width) to.left = width - elemWidth;
+                    }
+                    if(height){
+                        if((to.top + elemHeight) > height) to.top = height - elemHeight;
+                    }
                 }
 
                 // min
