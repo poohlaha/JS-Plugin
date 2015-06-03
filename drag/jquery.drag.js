@@ -55,7 +55,6 @@
                 .bind('touchmove', $.proxy(self._move, self))
                 .bind('touchend', $.proxy(self._end, self))
                 .bind('touchcancel', $.proxy(self._end, self));
-
             return self;
         },
 
