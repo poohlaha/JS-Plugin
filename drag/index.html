@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drag</title>
+    <style>
+        .box{
+            display: inline-block;
+            width: 160px;
+            height: 100px;
+            line-height: 100px;
+            text-align: center;
+            font-size: 20px;
+            background: #817CC8;
+            border: 1px solid #A2A2A3;
+        }
+    </style>
+    <script src="../jquery-1.7.min.js"></script>
+    <script src="jquery.drag.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $("#drag1").drag();
+            $("#drag2").drag();
+            $("#drag3").drag({
+                axis: 'x'
+            });
+            $("#drag4").drag({
+                axis: 'y'
+            });
+        });
+    </script>
+</head>
+<body>
+
+<div id="drag1" class="box">xy:static</div>
+<div id="drag2" class="box" style="z-index: auto; position: relative;">xy:relative</div>
+<div id="drag3" class="box" style="position: absolute;">x:absolute</div>
+<div id="drag4" class="box" style="position: fixed;top: 200px;right:200px;">y:fixed</div>
+</body>
+</html>
