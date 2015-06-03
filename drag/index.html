@@ -18,7 +18,10 @@
     <script src="jquery.drag.js"></script>
     <script type="text/javascript">
         $(function(){
-            $("#drag1").drag();
+            $("#drag1").drag({
+                min:{left: 10, top: 10},
+                max:{left: 1400, top: 700}
+            });
             $("#drag2").drag();
             $("#drag3").drag({
                 axis: 'x'

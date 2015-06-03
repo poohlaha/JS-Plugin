@@ -3,7 +3,6 @@
  */
 (function(window,document,undefined,$){
     'use strict';
-
     var doc = $(document),datakey = 'js-drag',
         defaults = {
             drag: null,
@@ -130,7 +129,9 @@
                     offset = drag.parent(!0).offset(),
                     minLeft, minTop, maxLeft, maxTop,
                     to = {},
-                    te = e.touches ? e.touches[0] : e;
+                    te = e.touches ? e.touches[0] : e,
+                    elemWidth = drag.outerWidth(true),
+                    elemHeight = drag.outerHeight(true);
 
                 // axis
                 if (~options.axis.indexOf('x')) to.left = te.pageX - pos.x + pos.l;
@@ -140,8 +141,6 @@
                 if(~options.isOverWindowDrag) {
                     var height = window.innerHeight || document.documentElement.clientHeight;
                     var width = window.innerWidth || document.documentElement.clientWidth;
-                    var elemWidth = drag.outerWidth(true);
-                    var elemHeight = drag.outerHeight(true);
                     if(to.left < 0) to.left = 0;
                     if(to.top < 0) to.top = 0;
                     if((to.left + elemWidth)  > width) to.left = width - elemWidth;
@@ -152,9 +151,12 @@
                 if (min && min.left !== undefined) {
                     if (to.left < (minLeft = min.left + offset.left)) to.left = minLeft;
                 }
+
                 if (min && min.top !== undefined) {
                     if (to.top < (minTop = min.top + offset.top)) to.top = minTop;
                 }
+
+
 
                 // max
                 if (max && max.left !== undefined) {
