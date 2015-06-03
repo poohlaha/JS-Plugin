@@ -4,13 +4,15 @@
 (function(window,document,undefined,$){
     'use strict';
 
-    var doc = $(document),body = $(document.body),datakey = 'js-drag',
+    var doc = $(document),datakey = 'js-drag',
         defaults = {
             drag: null,
             axis: 'xy',// 拖拽轴向，x：水平，y：垂直，xy：所有
             cursor: 'move',// 鼠标形状
             min: null,// 拖拽对象的最小位置，格式为{left: 10, top: 10}
             max: null,// 拖拽对象的最大位置，格式为{left: 1000, top: 1000}
+            isOverWindowDrag:false,//是否超出window拖拽
+            scroll:false,
             zIndex: 9999,
             onDragBefore: $.noop,// 拖拽开始前回调
             onDragStart: $.noop,// 拖拽开始后回调
@@ -21,6 +23,8 @@
     $.fn.drag = function(options){
         options = $.extend({},defaults,options);
         if(!options) return;
+        if(options.scroll) $(document.body).css({"overflow":""});
+        else $(document.body).css({"overflow":"hidden"});
         return this.each(function() {
             var element = this,instance = $(element).data(datakey);
             if (!instance) {
@@ -80,12 +84,11 @@
                     te = e.touches ? e.touches[0] : e;
 
                 if (!element.has(drag).length) drag = element;
-
                 self.drag = drag;
                 options.onDragBefore.call(drag[0], e, self);
 
                 self.zIndex = drag.css('z-index');
-                self.cursor = body.css('cursor');
+                self.cursor = $(document.body).css('cursor');
                 self.drag = drag.css('z-index', options.zIndex);
                 cssPos = drag.css('position');
                 offset = drag.offset();
@@ -103,7 +106,7 @@
                     t: offset.top
                 };
                 self.is = !0;
-                if (self.options.cursor) body.css('cursor', options.cursor);
+                if (self.options.cursor) $(document.body).css('cursor', options.cursor);
                 options.onDragStart.call(drag[0], e, self);
             }
         },
@@ -129,10 +132,21 @@
                     to = {},
                     te = e.touches ? e.touches[0] : e;
 
-
                 // axis
                 if (~options.axis.indexOf('x')) to.left = te.pageX - pos.x + pos.l;
                 if (~options.axis.indexOf('y')) to.top = te.pageY - pos.y + pos.t;
+
+                //window over drag
+                if(~options.isOverWindowDrag) {
+                    var height = window.innerHeight || document.documentElement.clientHeight;
+                    var width = window.innerWidth || document.documentElement.clientWidth;
+                    var elemWidth = drag.outerWidth(true);
+                    var elemHeight = drag.outerHeight(true);
+                    if(to.left < 0) to.left = 0;
+                    if(to.top < 0) to.top = 0;
+                    if((to.left + elemWidth)  > width) to.left = width - elemWidth;
+                    if((to.top + elemHeight) > height) to.top = height - elemHeight;
+                }
 
                 // min
                 if (min && min.left !== undefined) {
@@ -165,7 +179,7 @@
                 var self = this,drag = self.drag;
                 e.preventDefault();
                 self.is = !1;
-                if (self.options.cursor) body.css('cursor', self.cursor);
+                if (self.options.cursor) $(document.body).css('cursor', self.cursor);
                 drag.css('z-index', self.zIndex);
                 self.options.onDragEnd.call(drag[0], e, self);
             }
