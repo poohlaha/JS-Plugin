@@ -10,7 +10,15 @@
     var util = {
         scriptName:'index.js',
         jsFile:[
-            
+            "lib/util/util.js",
+            "lib/controls/scale.js",
+            "lib/controls/drag.js",
+            "lib/geometry/geometry.js",
+            'lib/geometry/Rectangle.js',
+            "lib/geometry/Point.js",
+            "lib/geometry/Circle.js",
+            "lib/canvas/canvas.js",
+            "lib/layer/layer.js"
         ],
         jsTags:'',
         host:function(){
