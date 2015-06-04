@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src = "index.js"></script>
+    <script type = "text/javascript">
+        var layer;
+        var circleStyle = {fillColor:"blue", fill:true, stroke:true, fillOpacity:1, strokeOpacity:1};
+        window.addEventListener("load", init2, true);
+        function init2() {
+            var div = document.getElementById("renderer2");
+            div.innerHTML = "";
+            layer = new Layer(div);
+           /* for(var i=0; i<7; i++) {
+                addCircle();
+            }*/
+
+            addPoint();
+            addRectangle();
+            addCircle();
+        }
+
+        function addCircle() {
+            var vectors = [];
+            var circle = new Circle((Math.random()*400-200), (Math.random()*300-150), Math.random()*10 + 5);
+            var vector = new Util.Vector(circle);
+            vector.style = circleStyle;
+            vectors.push(vector);
+            layer.addVectors(vectors);
+        }
+
+        function addPoint() {
+            var vectors = [];
+            var point = new Point((Math.random()*400-200), (Math.random()*300-150));
+            vectors.push(new Util.Vector(point));
+            layer.addVectors(vectors);
+        }
+
+        function addRectangle(){
+            var vectors = [];
+            var rectangle = new Rectangle(30,30,100,100);
+            var vector = new Util.Vector(rectangle);
+            vectors.push(vector);
+            layer.addVectors(vectors);
+        }
+
+    </script>
+</head>
+<body>
+   <center>
+       <div  style="width:700px; height:500px; border:1px solid black" id="renderer2">&nbsp;</div>
+   </center>
+</body>
+</html>
