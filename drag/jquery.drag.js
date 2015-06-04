@@ -157,10 +157,16 @@
                     if(to.left < 0) to.left = 0;
                     if(to.top < 0) to.top = 0;
                     if(width){
-                        if((to.left + elemWidth)  > width) to.left = width - elemWidth;
+                        if((to.left + elemWidth)  > width){
+                            var left = width - elemWidth;
+                            left > 0 ? to.left = left: to.left = 0;
+                        }
                     }
                     if(height){
-                        if((to.top + elemHeight) > height) to.top = height - elemHeight;
+                        if((to.top + elemHeight) > height){
+                            var top = height - elemHeight;
+                            top > 0 ? to.top = top : to.top = 0;
+                        }
                     }
                 }
 
