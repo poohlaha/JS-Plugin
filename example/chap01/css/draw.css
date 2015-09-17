@@ -1,0 +1,95 @@
+body{
+
+}
+
+.content{
+    text-align: center;
+    *position: absolute;
+}
+
+.warp{
+    position: relative;
+    width: 704px;
+    margin: 0 auto;
+
+}
+
+.contentPhoto{
+    *position: absolute;
+}
+
+.centerPhoto{
+    position: absolute;
+    left:294px;
+    top:250px;
+    cursor: pointer;
+}
+
+.photo1{
+    position: absolute;
+    left:0px;
+    top:50px;
+    cursor: pointer;
+}
+
+.photo2{
+    position: absolute;
+    left:0px;
+    top:250px;
+    cursor: pointer;
+}
+
+.photo3{
+    position: absolute;
+    left:0px;
+    top:450px;
+    cursor: pointer;
+}
+
+.photo4{
+    position: absolute;
+    left:600px;
+    top:50px;
+    cursor: pointer;
+}
+
+.photo5{
+    position: absolute;
+    left:600px;
+    top:250px;
+    cursor: pointer;
+}
+
+.photo6{
+    position: absolute;
+    left:600px;
+    top:450px;
+    cursor: pointer;
+}
+
+svg,.sve{
+    /*margin: 0 auto;*/
+    *position: absolute;
+    left: 0px;
+    top: 0px;
+    width:100%;
+}
+
+.photo1,.photo2,.photo3,.photo4,.photo5,.photo6{
+    width: 104px;
+    height: 104px;
+    line-height: 104px;
+    text-align: center;
+}
+
+img{
+    border-left: 2px solid #0F8333;
+    border-right: 2px solid #0F8333;
+    border-top: 2px solid #0F8333;
+    border-bottom: 2px solid #0F8333;
+    border-radius: 4px;
+}
+
+.lineCls{
+    width: 100%;
+}
