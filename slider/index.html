@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head lang="en">
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/silder.js"></script>
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript">
+        $(function(){
+           var options = {
+               nextView : $(".picSildeRight"),//上一张节点
+               prevView : $(".picSildeLeft"),//下一张节点
+               litterView : $("#cSlideUl ul"),//小图中可见图片Node
+               litterViewParent : $("#cbtn"),//小图整体Node
+               displayImageCount : 5//小图中可见图片数据
+           };
+           $(".img").sliderPhoto(options);
+        });
+
+    </script>
+</head>
+<body>
+<div id="wrapper">
+    <!--滚动看图-->
+    <div id="picSlideWrap" class="clearfix">
+        <h3 class="titleh3">高清：我国多省遭50年来罕见旱情</h3>
+        <h4 class="titleh4">发布时间：2011-05-30 04:43:00  |  <a href="http://www.17sucai.com">进入复兴论坛</a>　来源:中国新闻网</h4>
+
+        <div class="imgnav" id="imgnav">
+            <div class ="img">
+                <div class="content">
+                    <img src="images/100260_1306276811398.jpg" width="780" height="400"/>
+                    <p>今年以来，湘鄂两地降雨、来水偏少，蓄水不足，出现严重的旱情。</p>
+                </div>
+
+                <div class="content">
+                    <img src="images/100261_1306276853791.jpg"  width="780" height="400"/>
+                    <p>在流经湖北石首市、湖南华容县等地的华容河流域1679平方公里范围内，30万群众生产生活用水出现困难。</p>
+                </div>
+
+                <div class="content">
+                    <img src="images/100391_4381_1306217104406.jpg" width="780" height="400" />
+                    <p>从5月4日开始，湖南华容县和湖北石首市一起“引江济河”，在位于石首市调关镇的华容河与长江交汇处筑堤铺管，通过管道将长江水引进久旱少水的华容河.新华社记者 李尕 摄 </p>
+                </div>
+
+                <div class="content">
+                    <img src="images/bImg.jpg"  width="780" height="400" />
+                    <p>今年以来，湘鄂两地降雨、来水偏少，蓄水不足，出现严重的旱情。</p>
+                </div>
+
+                <div class="content">
+                    <img src="images/100260_1306276811398.jpg" width="780" height="400"/>
+                    <p>在流经湖北石首市、湖南华容县等地的华容河流域1679平方公里范围内，30万群众生产生活用水出现困难。</p>
+                </div>
+
+                <div class="content">
+                    <img src="images/100261_1306276853791.jpg"  width="780" height="400"/>
+                    <p>从5月4日开始，湖南华容县和湖北石首市一起“引江济河”，在位于石首市调关镇的华容河与长江交汇处筑堤铺管，通过管道将长江水引进久旱少水的华容河.新华社记者 李尕 摄 </p>
+                </div>
+
+                <div class="content">
+                    <img src="images/100391_4381_1306217104406.jpg" width="780" height="400" />
+                    <p>今年以来，湘鄂两地降雨、来水偏少，蓄水不足，出现严重的旱情。</p>
+                </div>
+
+                <div content="content">
+                    <img src="images/bImg.jpg"  width="780" height="400" />
+                    <p>在流经湖北石首市、湖南华容县等地的华容河流域1679平方公里范围内，30万群众生产生活用水出现困难。</p>
+                </div>
+
+                <div class="content">
+                    <img src="images/100260_1306276811398.jpg" width="780" height="400"/>
+                    <p>从5月4日开始，湖南华容县和湖北石首市一起“引江济河”，在位于石首市调关镇的华容河与长江交汇处筑堤铺管，通过管道将长江水引进久旱少水的华容河.新华社记者 李尕 摄 </p>
+                </div>
+
+                <div class ="content">
+                    <img src="images/100261_1306276853791.jpg"  width="780" height="400"/>
+                    <p>今年以来，湘鄂两地降雨、来水偏少，蓄水不足，出现严重的旱情。在流经湖北石首市、湖南华容县等地的华容河流域1679平方公里范围内，30万群众生产生活用水出现困难。从5月4日开始，湖南华容县和湖北石首市一起“引江济河”，在位于石首市调关镇的华容河与长江交汇处筑堤铺管，通过管道将长江水引进久旱少水的华容河.新华社记者 李尕 摄 </p>
+                </div>
+
+            </div>
+
+            <div id="cbtn">
+                <i class="picSildeLeft"><img src="images/ico/picSlideLeft.gif"/></i>
+                <i class="picSildeRight"><img src="images/ico/picSlideRight.gif"/></i>
+                <div id="cSlideUl">
+                    <ul>
+                        <li><img src="images/100260_1306276811398.jpg"/></li>
+                        <li><img src="images/100261_1306276853791.jpg"/></li>
+                        <li><img src="images/100391_4381_1306217104406.jpg" /></li>
+                        <li><img src="images/bImg.jpg"/></li>
+                        <li><img src="images/100260_1306276811398.jpg"/></li>
+                        <li><img src="images/100261_1306276853791.jpg"/></li>
+                        <li><img src="images/100391_4381_1306217104406.jpg" /></li>
+                        <li><img src="images/bImg.jpg"/></li>
+                        <li><img src="images/100260_1306276811398.jpg"/></li>
+                        <li><img src="images/100261_1306276853791.jpg"/></li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+    </div><!--end滚动看图-->
+
+</div>
+</body>
+</html>
