@@ -1,0 +1,187 @@
+/**
+ * Created by tlzhang on 2015/12/1.
+ */
+
+var slider = (function(){
+
+    var module = function(){};
+    module.fn = module.prototype;
+
+    module.fn.proxy = function(func,obj){
+        if(!func) return;
+        var self = this;
+        return (function(){
+            return func.apply(obj || self,arguments);
+        });
+
+        //return $.proxy(func, this);
+    };
+
+    module.fn.load = function(func){
+        return $(this.proxy(func));
+    };
+
+    module.fn.include = function(obj){
+        return $.extend(this,obj);
+    };
+
+    return module;
+})(jQuery);
+
+/**
+ * 滑动插件
+ */
+(function($,window,undefinded){
+
+    var defaultOption = {
+        nextView : undefinded,//上一张节点
+        prevView : undefinded,//下一张节点
+        litterView : undefinded,//小图中可见图片Node
+        litterViewParent : undefinded,//小图整体Node
+        imageView : undefinded,//整体图片Node
+        displayImageCount : 0,//小图中可见图片数据
+        everyPicPx : 142,//每张图片大小
+        animateTime : 200,//动画时间
+        prevText :'上一张',
+        nextText :'下一张'
+    };
+
+    $.fn.sliderPhoto = function(options){
+        var option = $.extend({},defaultOption,options);
+        if(!option) throw new Error("Options must be not empty!");
+
+        option.imageView = this;
+
+        if(!option.nextView || !option.prevView || !option.litterView || !option.litterViewParent
+            || !option.imageView || option.displayImageCount == 0)
+            throw new Error("You must input options!");
+
+        load(option);
+    };
+
+    function load(option){
+        var _slider = new slider();
+        _slider._next = function(){
+            if(this.index >= 0 && this.index < this.imageViewLength - 1){
+                this.index++;
+                if(this.index >= (this.imageViewLength - this.displayImageCount))
+                    this.litterView.animate({ "left": "-=" + this.everyPicPx + 'px' },this.animateTime);
+                this._showImage();
+            }else{//last image
+                this.index = 0;
+                this._showImage();
+                var _px = (this.imageViewLength - this.displayImageCount) * this.everyPicPx + 'px';
+                this.litterView.animate({ "left": "+=" + _px },this.animateTime);
+                return;
+            }
+        };
+
+        _slider._addLitterSpan = function(){
+            var self = this;
+            this.litterViewLi.each(function(e){
+                $(this).append('<span>' + (e + 1) + '/' + self.imageViewLength + '</span>');
+            });
+        };
+
+        _slider._prev = function(){
+            if(this.index > 0){
+                if(this.index >= this.displayImageCount)
+                    this.litterView.animate({ "left": "+=" + this.everyPicPx + 'px' },this.animateTime);
+                this.index--;
+                this._showImage();
+            }
+        };
+
+        _slider._hoverIn = function(){
+            this.find("a").fadeIn();
+        };
+
+        _slider._hoverOut = function(){
+            this.find("a").fadeOut();
+        };
+
+        _slider._showImage = function(index){
+            //this.imageViewChild.eq(this.index).stop(true,true).fadeIn(800).siblings("img").hide();
+            this.imageViewChild.hide();
+            this.imageViewChild.next().hide();
+            if(index){
+                this.imageViewChild.eq(index).stop(true,true).fadeIn(800);
+                this.imageViewChild.eq(index).stop(true,true).next().fadeIn(800);
+                this.litterViewLi.eq(index).addClass("hov").siblings().removeClass("hov");
+                this.index = index;
+            }else{
+                this.imageViewChild.eq(this.index).stop(true,true).fadeIn(800);
+                this.imageViewChild.eq(this.index).stop(true,true).next().fadeIn(800);
+                this.litterViewLi.eq(this.index).addClass("hov").siblings().removeClass("hov");
+            }
+
+        };
+
+        _slider._addNextAndPrevDiv = function(){
+            var str = '<a href="javaScript:void(0)" class="pngFix" style="display: none;"></a>';
+            if(this.imageView.find('.prev').length <= 0){
+                var prevStr = '<div class = "prev" title="'+this.prevText+'">';
+                prevStr += str;
+                prevStr += '</div';
+                this.imageView.append(prevStr);
+            }
+
+            if(this.imageView.find('.next').length <= 0){
+                var nextStr = '<div class = "next" title="'+this.nextText+'">';
+                nextStr += str;
+                nextStr += '</div';
+                this.imageView.append(nextStr);
+            }
+
+        };
+
+        _slider.load(function(){
+            this.nextView = option.nextView;//上一张节点
+            this.prevView = option.prevView;//下一张节点
+            this.litterView = option.litterView;//小图中可见图片Node
+            this.litterViewParent = option.litterViewParent;//小图整体Node
+            this.litterViewLi = this.litterViewParent.find('li');//小图片中每一个图片Node
+            this.imageView = option.imageView;//整体图片Node
+            this.imageViewChild = this.imageView.find('img');
+            if(!this.imageViewChild)
+                throw new Error("整个图片父节点中没有img子节点!");
+            this.imageViewLength = this.imageViewChild.length;//所有图片数量
+            this.index = 0;//索引
+            this.displayImageCount = option.displayImageCount;//小图中可见图片数据
+            this.everyPicPx = option.everyPicPx;//每张图片大小
+            this.animateTime = option.animateTime;//动画时间
+            this.prevText = option.prevText;
+            this.nextText = option.nextText;
+
+            //bind click events
+            this.nextView.click(this.proxy(this._next));
+            this.prevView.click(this.proxy(this._prev));
+            this.nextView.hover(this.proxy(this._hoverIn,this.nextView),this.proxy(this._hoverOut,this.nextView));
+            this.prevView.hover(this.proxy(this._hoverIn,this.prevView),this.proxy(this._hoverOut,this.prevView));
+
+            var self = this;
+            this.litterViewLi.click(function(){
+                var index = self.litterViewLi.index(this);
+                self._showImage(index);
+            });
+
+            this.imageViewChild.hide();
+            this.imageViewChild.next().hide();
+            this.imageViewChild.eq(0).show();
+            this.imageViewChild.eq(0).next().show();
+            this.litterViewLi.eq(0).addClass("hov");
+            this._addNextAndPrevDiv();
+            this._addLitterSpan();
+
+            this.imageViewPrev = this.imageView.find('.prev');
+            this.imageViewNext = this.imageView.find('.next');
+
+            this.imageViewPrev.hover(this.proxy(this._hoverIn,this.imageViewPrev),this.proxy(this._hoverOut,this.imageViewPrev));
+            this.imageViewNext.hover(this.proxy(this._hoverIn,this.imageViewNext),this.proxy(this._hoverOut,this.imageViewNext));
+            this.imageViewPrev.click(this.proxy(this._prev));
+            this.imageViewNext.click(this.proxy(this._next));
+        });
+
+    }
+
+})(jQuery,window,undefined);
