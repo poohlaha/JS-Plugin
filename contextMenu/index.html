@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="js/jquery.menu.js"></script>
+    <link href="css/menu.css" rel="stylesheet" type="text/css" />
+    <style>
+        div.header_wrapper{
+            width: 100%;
+            height: 200px;
+            background-image: url(bg_banner.jpg);
+            background-repeat: no-repeat;
+            background-color: #FFF;
+        }
+
+        div.wrapper{
+            width: 100%;
+            background-image: url(bg_main.jpg);
+            background-repeat: repeat-y;
+        }
+
+        div.pdcls{
+            overflow:hidden;
+            width:530px;
+            padding: 25px;
+            border: 1px solid #FF0099;
+            background-color: #FFCCFF;
+            margin: 0 auto;
+        }
+
+        table.altrowstable {
+            font-family: verdana,arial,sans-serif;
+            font-size:11px;
+            color:#333333;
+            border-width: 1px;
+            border-color: #a9c6c9;
+            border-collapse: collapse;
+            cursor: pointer;
+        }
+
+        table.altrowstable thead tr{
+            border-width: 1px;
+            padding: 8px;
+            border-style: solid;
+            border-color: #a9c6c9;
+            background-color: #C2D5D8;
+        }
+
+        table.altrowstable td {
+            border-width: 1px;
+            padding: 8px;
+            border-style: solid;
+            border-color: #a9c6c9;
+        }
+
+        .oddrowcolor{
+            background-color:#d4e3e5;
+        }
+
+        .oddrowcolor:hover,.evenrowcolor:hover{
+            background-color:yellow;
+        }
+
+        .evenrowcolor{
+            background-color:#c3dde0;
+        }
+
+    </style>
+    <script>
+        $(function(){
+
+            function sortBy(self,flag){
+                var array = new Array();
+                var map = new self.map;
+                var tbody = $(self._obj).closest('table').find('tbody');
+                tbody.find("tr").each(function(){
+                    var text = $(this).find("td:first").text();
+                    if(!text) text = 0;
+                    else text = parseInt(text);
+                    array.push(text);
+                    map.put(text,$(this));
+                });
+
+                bubbleSort(array,flag);
+
+                //重新按顺序排序
+                if(array.length > 0){
+                    tbody.empty();
+                    for(var i = 0; i < array.length; i++){
+                        var id = array[i];
+                        var node = map.get(id);
+                        if(!node) continue;
+                        if(node.hasClass('evenrowcolor')){
+                            node.removeClass('evenrowcolor');
+                        }else if(node.hasClass('oddrowcolor')){
+                            node.removeClass('oddrowcolor');
+                        }
+
+                        if(i % 2 != 0){
+                            node.addClass('evenrowcolor');
+                        }else{
+                            node.addClass('oddrowcolor');
+                        }
+
+                        tbody.append(node);
+                        //重新注册事件
+                        $(node).contextMenu(options);
+                        $("table thead tr").contextMenu(optionsHead);
+                        $(".menu_box").remove();//移除菜单
+                    }
+                }
+            }
+
+
+            var optionsHead = {
+                data:[{
+                    text:'正序',
+                    click:function(){
+                        if(!this._obj) return;
+                        sortBy(this,0);
+                    }
+                },{
+                    text:'倒序',
+                    click:function(){
+                        if(!this._obj) return;
+                        sortBy(this,1);
+                    }
+                }]
+            };
+
+            $("table thead tr").contextMenu(optionsHead);
+
+            var options = {
+                menu_box_cls:'',
+                menu_body_cls:'',
+                menu_ul_cls:'',
+                menu_li_cls:'',
+                menu_li_a_cls:'',
+                onContextMenu:function(){
+                    return true;
+                },
+                data:[{
+                    img:{
+                        src:'',
+                        width:25,
+                        height:25,
+                        cls:''
+                    },
+
+                    text:'编辑',
+
+                    click:function(){
+                        if(!this._obj) return;
+
+                        var tbody = $(this._obj).closest('table').find('tbody');
+                        tbody.find('tr').each(function(){
+                            removeBlankRow($(this));
+                        });
+
+                        var i = 0;
+                        $(this._obj).find("td").each(function(){
+                            if($(this).find('input').length > 0){
+                                var text = $(this).find('input').val() || '';
+                                $(this).text(text);
+                            }else{
+                                var text = $(this).text();
+                                $(this).text("");
+                                $(this).append('<input type="text" value = "'+text+'" style="width:'+$(this).width()+'px;"/>');
+                            }
+
+                            if( i == 0){
+                                $(this).find('input').focus();
+                            }
+
+                            i++;
+                        });
+
+
+                        inputKeyDown(this);
+                    }
+                },{
+                    img:{
+                        src:'',
+                        width:25,
+                        height:25,
+                        cls:''
+                    },
+
+                    text:'删除',
+
+                    click:function(){
+                        if(!this._obj) return;
+                        this._obj.remove();
+                        this._menu.remove();
+                    }
+                },{
+                    img:{
+                        src:'',
+                        cls:''
+                    },
+
+                    text:'新增',
+
+                    click:function(){
+                        if(!this) return;
+                        var obj = this._obj.clone(true);
+                        if(!obj) return;
+
+                        var tbody = $(this._obj).closest('table').find('tbody');
+                        tbody.find('tr').each(function(){
+                            removeBlankRow($(this));
+                        });
+
+                        var map = new this.map;
+                        this._obj.find("td").each(function(i){
+                           map.put(i + 1,$(this).width());
+                        });
+
+                        var self = this;
+                        obj.find("td").each(function(i){
+                            var width = map.get(i + 1);
+                            $(this).text("");
+                            $(this).append('<input type="text" value = "" style="width:'+width+'px;"/>');
+                        });
+
+                        $(this._obj).closest('tbody').append(obj);
+
+                        $(obj).find('input')[0].focus();
+                        $(obj).contextMenu(options);
+                        inputKeyDown(this,obj);
+                    }
+                }]
+            };
+
+            $("table tbody tr").each(function(){
+                $(this).contextMenu(options);
+            });
+
+            function removeBlankRow(obj){
+                var x = 0;
+                obj.find('td').each(function(){
+                    if($(this).find('input').length > 0){
+                        var text = $(this).find('input').val() || '';
+                        if(!text) x++;
+                        $(this).text(text);
+                    }
+                });
+
+                if(x == obj.find('td').length){
+                    obj.remove();
+                }
+            }
+
+            function inputKeyDown(self,obj){
+                if(!obj) obj = self._obj;
+                obj.find('td input').keydown(function(e){
+                    if(e.keyCode == 13){
+                        removeBlankRow(obj);
+                    }
+                });
+            }
+
+            /**
+             * flag --- 0:正序,其他:倒序
+             * @param array
+             * @param flag
+             * @returns {*}
+             */
+            function bubbleSort(array,flag){
+                var i = 0,len = array.length, j,d;
+                for(;i < len;i++){
+                    for(j = 0;j < len;j++){
+                        if(flag === 0){
+                            if(array[i] < array[j]){
+                                d = array[j];
+                                array[j] = array[i];
+                                array[i] = d;
+                            }
+                        }else{
+                            if(array[i] > array[j]){
+                                d = array[i];
+                                array[i] = array[j];
+                                array[j] = d;
+                            }
+                        }
+
+                    }
+                }
+
+                return array;
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <div class="wrapper">
+        <div class="header_wrapper"></div>
+        <div class="pdcls">
+            <table class="altrowstable">
+                <thead>
+                <tr>
+                    <td>序号</td>
+                    <td>用户名</td>
+                    <td>性别</td>
+                    <td>EMAIL</td>
+                    <td>家庭地址</td>
+                    <td>个人信息</td>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr class="evenrowcolor">
+                    <td>11</td>
+                    <td>张三</td>
+                    <td>男</td>
+                    <td>zhangsan@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单1</td>
+                </tr>
+
+                <tr class="oddrowcolor">
+                    <td>22</td>
+                    <td>李四</td>
+                    <td>男</td>
+                    <td>lisi@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单2</td>
+                </tr>
+
+                <tr class="evenrowcolor">
+                    <td>13</td>
+                    <td>王五</td>
+                    <td>男</td>
+                    <td>wangwu@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单3</td>
+                </tr>
+
+                <tr class="oddrowcolor">
+                    <td>42</td>
+                    <td>赵六</td>
+                    <td>男</td>
+                    <td>zhaoliu@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单4</td>
+                </tr>
+
+                <tr class="evenrowcolor">
+                    <td>51</td>
+                    <td>妞妞</td>
+                    <td>女</td>
+                    <td>niuniu@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单5</td>
+                </tr>
+
+                <tr class="oddrowcolor">
+                    <td>16</td>
+                    <td>田田</td>
+                    <td>女</td>
+                    <td>tiantian@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单6</td>
+                </tr>
+
+                <tr class="evenrowcolor">
+                    <td>7</td>
+                    <td>朱七</td>
+                    <td>男</td>
+                    <td>zhuqi@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单7</td>
+                </tr>
+
+                <tr class="oddrowcolor">
+                    <td>8</td>
+                    <td>陈八</td>
+                    <td>男</td>
+                    <td>chenba@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单8</td>
+                </tr>
+
+                <tr class="evenrowcolor">
+                    <td>9</td>
+                    <td>于九</td>
+                    <td>男</td>
+                    <td>yujiu@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单9</td>
+                </tr>
+
+                <tr class="oddrowcolor">
+                    <td>10</td>
+                    <td>伍十</td>
+                    <td>男</td>
+                    <td>wushi@test.com</td>
+                    <td>上海市浦东新区新金桥路</td>
+                    <td>测试右键菜单10</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>
