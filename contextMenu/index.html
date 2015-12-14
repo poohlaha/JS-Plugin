@@ -3,7 +3,7 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title></title>
-    <script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="../jquery-1.7.min.js"></script>
     <script type="text/javascript" src="js/jquery.menu.js"></script>
     <link href="css/menu.css" rel="stylesheet" type="text/css" />
     <style>
@@ -107,30 +107,11 @@
                         tbody.append(node);
                         //重新注册事件
                         $(node).contextMenu(options);
-                        $("table thead tr").contextMenu(optionsHead);
                         $(".menu_box").remove();//移除菜单
                     }
                 }
             }
 
-
-            var optionsHead = {
-                data:[{
-                    text:'正序',
-                    click:function(){
-                        if(!this._obj) return;
-                        sortBy(this,0);
-                    }
-                },{
-                    text:'倒序',
-                    click:function(){
-                        if(!this._obj) return;
-                        sortBy(this,1);
-                    }
-                }]
-            };
-
-            $("table thead tr").contextMenu(optionsHead);
 
             var options = {
                 menu_box_cls:'',
@@ -138,99 +119,121 @@
                 menu_ul_cls:'',
                 menu_li_cls:'',
                 menu_li_a_cls:'',
+                menu_arrow_cls:'',
                 onContextMenu:function(){
                     return true;
                 },
                 data:[{
-                    img:{
-                        src:'',
-                        width:25,
-                        height:25,
-                        cls:''
-                    },
+                    text: '操作',
+                    children: [{
+                        img:{
+                            src:'',
+                            width:25,
+                            height:25,
+                            cls:''
+                        },
 
-                    text:'编辑',
+                        text:'编辑',
 
-                    click:function(){
-                        if(!this._obj) return;
+                        click:function(){
+                            if(!this._obj) return;
 
-                        var tbody = $(this._obj).closest('table').find('tbody');
-                        tbody.find('tr').each(function(){
-                            removeBlankRow($(this));
-                        });
+                            var tbody = $(this._obj).closest('table').find('tbody');
+                            tbody.find('tr').each(function(){
+                                removeBlankRow($(this));
+                            });
 
-                        var i = 0;
-                        $(this._obj).find("td").each(function(){
-                            if($(this).find('input').length > 0){
-                                var text = $(this).find('input').val() || '';
-                                $(this).text(text);
-                            }else{
-                                var text = $(this).text();
+                            var i = 0;
+                            $(this._obj).find("td").each(function(){
+                                if($(this).find('input').length > 0){
+                                    var text = $(this).find('input').val() || '';
+                                    $(this).text(text);
+                                }else{
+                                    var text = $(this).text();
+                                    $(this).text("");
+                                    $(this).append('<input type="text" value = "'+text+'" style="width:'+$(this).width()+'px;"/>');
+                                }
+
+                                if( i == 0){
+                                    $(this).find('input').focus();
+                                }
+
+                                i++;
+                            });
+
+
+                            inputKeyDown(this);
+                        }
+                    },{
+                        img:{
+                            src:'',
+                            width:25,
+                            height:25,
+                            cls:''
+                        },
+
+                        text:'删除',
+
+                        click:function(){
+                            if(!this._obj) return;
+                            this._obj.remove();
+                            this._menu.remove();
+                        }
+                    },{
+                        img:{
+                            src:'',
+                            cls:''
+                        },
+
+                        text:'新增',
+
+                        click:function(){
+                            if(!this) return;
+                            var obj = this._obj.clone(true);
+                            if(!obj) return;
+
+                            var tbody = $(this._obj).closest('table').find('tbody');
+                            tbody.find('tr').each(function(){
+                                removeBlankRow($(this));
+                            });
+
+                            var map = new this.map;
+                            this._obj.find("td").each(function(i){
+                                map.put(i + 1,$(this).width());
+                            });
+
+                            var self = this;
+                            obj.find("td").each(function(i){
+                                var width = map.get(i + 1);
                                 $(this).text("");
-                                $(this).append('<input type="text" value = "'+text+'" style="width:'+$(this).width()+'px;"/>');
-                            }
+                                $(this).append('<input type="text" value = "" style="width:'+width+'px;"/>');
+                            });
 
-                            if( i == 0){
-                                $(this).find('input').focus();
-                            }
+                            $(this._obj).closest('tbody').append(obj);
 
-                            i++;
-                        });
-
-
-                        inputKeyDown(this);
-                    }
+                            $(obj).find('input')[0].focus();
+                            $(obj).contextMenu(options);
+                            inputKeyDown(this,obj);
+                        }
+                    }]
                 },{
-                    img:{
-                        src:'',
-                        width:25,
-                        height:25,
-                        cls:''
-                    },
+                    text:'排序',
+                    children:[{
+                        text:'正序',
+                        img:{
 
-                    text:'删除',
-
-                    click:function(){
-                        if(!this._obj) return;
-                        this._obj.remove();
-                        this._menu.remove();
-                    }
-                },{
-                    img:{
-                        src:'',
-                        cls:''
-                    },
-
-                    text:'新增',
-
-                    click:function(){
-                        if(!this) return;
-                        var obj = this._obj.clone(true);
-                        if(!obj) return;
-
-                        var tbody = $(this._obj).closest('table').find('tbody');
-                        tbody.find('tr').each(function(){
-                            removeBlankRow($(this));
-                        });
-
-                        var map = new this.map;
-                        this._obj.find("td").each(function(i){
-                           map.put(i + 1,$(this).width());
-                        });
-
-                        var self = this;
-                        obj.find("td").each(function(i){
-                            var width = map.get(i + 1);
-                            $(this).text("");
-                            $(this).append('<input type="text" value = "" style="width:'+width+'px;"/>');
-                        });
-
-                        $(this._obj).closest('tbody').append(obj);
-
-                        $(obj).find('input')[0].focus();
-                        $(obj).contextMenu(options);
-                        inputKeyDown(this,obj);
-                    }
+                        },
+                        click:function(){
+                            if(!this._obj) return;
+                            sortBy(this,0);
+                        }
+                    },{
+                        text:'倒序',
+                        click:function(){
+                            if(!this._obj) return;
+                            sortBy(this,1);
+                        }
+                    }]
                 }]
             };
 
