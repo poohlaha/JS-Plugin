@@ -252,8 +252,16 @@ var Map = (function (document) {
                     _top -= _menu.outerHeight();
                 }
 
-                if(_top > $(document.body).height()) _top =  $(document.body).height();
-                if(_left > $(document.body).width()) _left =  $(document.body).width();
+                if(_top > $(document.body).height() && $(document.body).height() > 0) _top =  $(document.body).height();
+                if(_left > $(document.body).width() && $(document.body).width() > 0) _left =  $(document.body).width();
+
+                if(_top < 0){
+                    _top = top;
+                }
+
+                if(_left < 0){
+                    _left = left;
+                }
 
                 this._menu.css({ 'left': _left, 'top': _top });
             },
