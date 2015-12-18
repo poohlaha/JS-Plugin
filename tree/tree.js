@@ -302,13 +302,17 @@
                 });
 
                 $(this._elem).find('.root').siblings("ul").each(function(){
-                    var a = $(this).find("a");
-                    if(a.find("i").length > 0){
-                        var i = a.find("i");
-                        if(i.hasClass('folder')){
-                            a.contextMenu(defaultMenuOptions);
+                    var a = $(this).find("a.tree-anchor");
+                    if(!a || a.length == 0) return true;//continue;
+                    a.each(function(){
+                        if($(this).find("i").length > 0){
+                            var i = $(this).find("i.tree-icon");
+                            if(i.hasClass('folder')){
+                                $(this).contextMenu(defaultMenuOptions);
+                            }
                         }
-                    }
+                    });
+
                 });
             };
 
@@ -350,10 +354,17 @@
                     }
                     $(this).siblings("ul.tree-children").hide();
                 }else if($(this).closest("li.tree-node").hasClass('tree-closed')){
+                    /*if(!$(this).hasClass("tree-loading")){//loading
+                        $(this).addClass("tree-loading");
+                    }*/
                     if($(this).closest("li.tree-node").hasClass('tree-closed')){
                         $(this).closest("li.tree-node").removeClass('tree-closed');
                         $(this).closest("li.tree-node").addClass('tree-open');
                     }
+
+                    /*if($(this).hasClass("tree-loading")){//loading
+                        $(this).removeClass("tree-loading");
+                    }*/
                     $(this).siblings("ul.tree-children").show();
                 }
 
