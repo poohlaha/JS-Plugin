@@ -19,22 +19,45 @@
     var Require = (function(){
 
         function require(deps,callback){
-            this._deps = deps || [];
-            this._getCurrentPath.call(this);//get current path
+            if(!this._currentPath)
+                this._getCurrentPath.call(this);//get current path
             this._getRootPath.call(this);//get root path
+
+            if((!this._isArray(deps) || deps.length == 0) && !callback)
+                return this;
+
+            this._init.call(this,deps,callback);
+            return this;
+        }
+
+        require.prototype._config = function(obj){
+            if(!obj || !obj.baseUrl) return this;
+            this._currentPath = obj.baseUrl;
+            return this;
+        };
+
+        require.prototype.deploy = function(deps,callback){
+            this._init.call(this,deps,callback);
+            return this;
+        };
+
+        require.prototype._isArray = function(object){
+            return  object && typeof object==='object' &&
+                typeof object.length==='number' &&
+                typeof object.splice==='function' &&
+                    //判断length属性是否是可枚举的 对于数组 将得到false
+                !(object.propertyIsEnumerable('length'));
+        };
+
+        require.prototype._init = function(deps,callback){
+            this._deps = deps || [];
             this._defQueue = [];//queue
             this._NotDefQueue = [];
             this._callback = callback;
             this._allDefArr = [];
-            this._isCallback = true;
             if(this._deps.length == 0 && !this._callback)
                 return this;
 
-            this._init.call(this);
-            return this;
-        }
-
-        require.prototype._init = function(){
             if(this._deps.length == 0){
                 var moduleName = document.currentScript && document.currentScript.id;
                 if(moduleName){
@@ -123,10 +146,8 @@
                 if(defQueueArr.length == 0){
                     window.clearInterval(checkLoadedTimeId);
                     self._defQueue.length = 0;
-                    if(self._isCallback){
-                        setTimeout(self._callback.apply(self,self._getAllParams.call(self)), 50);
-                        return;
-                    }
+                    setTimeout(self._callback.apply(self,self._getAllParams.call(self)), 50);
+                    return;
                 }
                 for(var i = 0;i < self._defQueue.length;i++){
                     var module = self._defQueue[i];
@@ -483,4 +504,8 @@
     window.require = function(deps,callback){
         return new Require(deps,callback);
     };
+
+    require.config = function(obj){
+        return require()._config(obj);
+    }
 })(window,document);
