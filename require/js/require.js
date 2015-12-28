@@ -26,14 +26,23 @@
             this._NotDefQueue = [];
             this._callback = callback;
             this._allDefArr = [];
+            this._isCallback = true;
+            if(this._deps.length == 0 && !this._callback)
+                return this;
+
             this._init.call(this);
             return this;
         }
 
         require.prototype._init = function(){
-            //var moduleName = document.currentScript && document.currentScript.id || 'REQUIRE_MAIN';
-            var self = this;
+            if(this._deps.length == 0){
+                var moduleName = document.currentScript && document.currentScript.id;
+                if(moduleName){
+                    this._deps.push(moduleName);
+                }
+            }
 
+            var self = this;
             for(var i = 0;i<this._deps.length;i++){
                 (function(i){
                     var _dep = self._deps[i];
@@ -46,7 +55,8 @@
                     }
 
                     _default._defaultCount ++;
-                    var module = new Module("@r_"+ (_default._defaultCount),_dep,self._currentPath,self._rootPath);
+                    //var module = new Module("@r_"+ (_default._defaultCount),_dep,self._currentPath,self._rootPath);
+                    var module = self._buildModule.call(self,_dep);
 
                     var moduleName = module._moduleName;
                     if(!_default._moduleCache[moduleName]) {//module have been loaded
@@ -57,12 +67,20 @@
                         };
                         self._defQueue.push(module);
                     }else{
-                        self._NotDefQueue.push(module);
+                        module = _default._moduleCache[moduleName].module;
+                        if(module._loaded = false){
+                            self._defQueue.push(module);
+                        }else
+                            self._NotDefQueue.push(module);
                     }
                 })(i);
             }
 
             this._nextTick.call(this);
+        };
+
+        require.prototype._buildModule = function(dep){
+            return new Module("@r_"+ (_default._defaultCount),dep,this._currentPath,this._rootPath);
         };
 
         require.prototype._nextTick = function(){
@@ -73,7 +91,6 @@
                     this._build.call(this,module);
                 }
 
-                this._checkLoaded.call(this);
             }
 
             if(this._NotDefQueue.length > 0){
@@ -81,13 +98,18 @@
                     var module = this._NotDefQueue[i];
                     if(!module) continue;
                     if(!module._export){
-                        this._save(module._moduleName,null,this._callback);
+                        this._save.call(this,module._moduleName,null,this._callback);
                     }
 
                     this._allDefArr.push(module);
                 }
             }
 
+            //in cache,export them.
+            if(this._NotDefQueue.length > 0 && this._NotDefQueue.length === this._deps.length){
+                setTimeout(this._callback.apply(this,this._getAllParams.call(this)), 50);
+            }else
+                this._checkLoaded.call(this);
         };
 
         require.prototype._checkLoaded = function(){
@@ -98,8 +120,10 @@
                 if(defQueueArr.length == 0){
                     window.clearInterval(checkLoadedTimeId);
                     self._defQueue.length = 0;
-                    setTimeout(self._callback.apply(self,self._getAllParams.call(self)), 50);
-                    return;
+                    if(self._isCallback){
+                        setTimeout(self._callback.apply(self,self._getAllParams.call(self)), 50);
+                        return;
+                    }
                 }
                 for(var i = 0;i < self._defQueue.length;i++){
                     var module = self._defQueue[i];
@@ -207,13 +231,9 @@
                 mod = _default._moduleCache[modName];
                 var module = mod.module || null;
                 if(module){
-                    //module._loaded = true;
                     module._export = callback ? callback(params) : null;
                 }
 
-                /*while(fn = mod.onload.shift()){
-                    fn(module._export);
-                }*/
             }else
                 callback && callback.apply(window, params);
 
@@ -368,14 +388,18 @@
                 start = this._request.substring(0,2);
             if(start === "./"){//current dir
                 this._modulePath = this._currentPath || '';
-            }else if(start === "../"){//parent dir
-                var path = this._currentPath;
-                if(path.slice(-1) === "/"){
-                    path = path.substring(0,path.length - 1);
-                }
+            }else if(start === ".."){//parent dir
+                start = this._request.substring(0,3);
+                if(start === "../"){
+                    var path = this._currentPath;
+                    if(path.slice(-1) === "/"){
+                        path = path.substring(0,path.length - 1);
+                    }
 
-                path = path.substring(0,path.lastIndexOf("/"));
-                this._modulePath = path + '/' || '';
+                    path = path.substring(0,path.lastIndexOf("/"));
+                    this._modulePath = path + '/' || '';
+                }else
+                    this._modulePath = this._rootPath;
             }else{//root dir
                 this._modulePath = this._rootPath;
             }
@@ -386,7 +410,74 @@
         return Module;
     })();
 
-    window.require = window.define = function(deps,callback){
+    var Define = (function(){
+
+        function define(dep,callback){
+            this._dep = dep || [];
+            this._require = new Require;
+            this._getCurrentPath = this._require._getCurrentPath();//get current path
+            this._getRootPath = this._require._getRootPath();//get root path
+            this._callback = callback;
+            this._init.call(this);
+            return this;
+        }
+
+        define.prototype._init = function(){
+            if(!this._dep[0]){
+                var moduleName = document.currentScript && document.currentScript.id;
+                if(moduleName){
+                    this._dep[0] = moduleName;
+                }
+            }
+
+            this._getModule.call(this);
+        };
+
+        define.prototype._getModule = function(){
+            //if module in cache,get it from cache
+            var isModuleInCache = false;
+            if(_default._moduleCache[this._dep[0]]){
+                var _module = _default._moduleCache[this._dep[0]];
+                if(_module._loaded == true){
+                    if(!_module._export){
+                        this._require._save.call(this._require,_module._moduleName,null,this._callback);
+                    }
+
+                    isModuleInCache = true;
+                    //export cache
+                    setTimeout(this._callback(this), 50);
+                    return;
+                }
+            }
+
+            //if not in cache,then load files.
+            if(!isModuleInCache){
+                var module = this._require._buildModule.call(this._require,this._dep[0]);
+                var moduleName = module._moduleName;
+                if(!_default._moduleCache[moduleName]) {//module have been loaded
+                    _default._moduleCache[moduleName] = {
+                        moduleUrl: module._modulePath + module._fileName,
+                        modName: moduleName,
+                        module: module
+                    };
+                }
+
+                this._require._save.call(this._require,module._moduleName,null,this._callback);
+
+                //this._require._defQueue.push(module);
+                //this._require._isCallback = false;
+                //this._require._nextTick.call(this._require);
+            }
+        };
+
+        return define;
+    })();
+
+    window.define = function(dep,callback){
+        return new Define(dep,callback);
+    };
+
+    window.require = function(deps,callback){
         return new Require(deps,callback);
-    }
+    };
 })(window,document);
