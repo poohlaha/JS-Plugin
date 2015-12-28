@@ -108,6 +108,9 @@
             //in cache,export them.
             if(this._NotDefQueue.length > 0 && this._NotDefQueue.length === this._deps.length){
                 setTimeout(this._callback.apply(this,this._getAllParams.call(this)), 50);
+                this._NotDefQueue.length = 0;
+                this._allDefArr.length = 0;
+                this._deps.length = 0;
             }else
                 this._checkLoaded.call(this);
         };
