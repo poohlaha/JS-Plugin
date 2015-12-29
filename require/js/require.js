@@ -294,8 +294,9 @@
                 }
             }
             if(stack) {
-                /**e.stack最后一行在所有支持的浏览器大致如下:
-                 *chrome23,firefox17,opera12,IE10
+                /**
+                 * e.stack最后一行在所有支持的浏览器大致如下:
+                 * chrome23,firefox17,opera12,IE10
                  */
                 stack = stack.split( /[@ ]/g).pop();//取得最后一行,最后一个空格或@之后的部分
                 stack = stack[0] == "(" ? stack.slice(1,-1) : stack;
