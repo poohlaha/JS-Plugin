@@ -139,6 +139,7 @@
         };
 
         require.prototype._checkLoaded = function(){
+            debugger;
             if(this._defQueue.length == 0) return;
             var self = this;
             var defQueueArr = self._defQueue;
@@ -146,7 +147,8 @@
                 if(defQueueArr.length == 0){
                     window.clearInterval(checkLoadedTimeId);
                     self._defQueue.length = 0;
-                    setTimeout(self._callback.apply(self,self._getAllParams.call(self)), 50);
+                    self._callback.apply(self,self._getAllParams.call(self));
+                    //setTimeout(self._callback.apply(self,self._getAllParams.call(self)), 50);
                     return;
                 }
                 for(var i = 0;i < self._defQueue.length;i++){
@@ -166,7 +168,7 @@
                     for(var j = 0;j < this._allDefArr.length;j++){
                         var module = this._allDefArr[j];
                         if(!module) continue;
-                        if(moduleName.indexOf(module._moduleName) != -1 && arr.indexOf(module) == -1){
+                        if((moduleName.indexOf(module._moduleName) != -1) && (this._indexOf(arr,module) == -1)){
                             arr.push(module._export);
                         }
                     }
@@ -176,6 +178,19 @@
             };
 
             var checkLoadedTimeId = setInterval(checkOut, 50);
+        };
+
+        require.prototype._indexOf = function(arr,obj){
+            if(!this._isArray(arr))
+                return -1;
+
+            var i = 0,len = arr.length;
+            for(;i<len;i++){
+                if(arr[i] === obj){
+                    return i;
+                }
+            }
+            return -1;
         };
 
         require.prototype._load = function(module,callback){
@@ -203,7 +218,7 @@
             var _onScriptLoad = function(evt){
                 if (evt.type === 'load' ||
                     (_default._readyRegExp.test((evt.currentTarget || evt.srcElement).readyState))) {
-                    self._getScriptData.call(self,evt);
+                    self._getScriptData.call(self,evt,_onScriptLoad);
                     module._loaded = true;
                 }
             };
@@ -263,14 +278,51 @@
 
         };
 
+        require.prototype._getCurrentScriptSrc = function(){
+            //取得正在解析的script节点
+            if(document.currentScript) { //firefox 4+
+                return document.currentScript.src;
+            }
+            // 参考 https://github.com/samyk/jiagra/blob/master/jiagra.js
+            var stack;
+            try {
+                a.b.c(); //强制报错,以便捕获e.stack
+            } catch(e) {//safari的错误对象只有line,sourceId,sourceURL
+                stack = e.stack;
+                if(!stack && window.opera){
+                    //opera 9没有e.stack,但有e.Backtrace,但不能直接取得,需要对e对象转字符串进行抽取
+                    stack = (String(e).match(/of linked script \S+/g) || []).join(" ");
+                }
+            }
+            if(stack) {
+                /**e.stack最后一行在所有支持的浏览器大致如下:
+                 *chrome23:
+                 *firefox17:
+                 *opera12:
+                 *IE10:
+                 */
+                stack = stack.split( /[@ ]/g).pop();//取得最后一行,最后一个空格或@之后的部分
+                stack = stack[0] == "(" ? stack.slice(1,-1) : stack;
+                return stack.replace(/(:\d+)?:\d+$/i, "");//去掉行号与或许存在的出错字符起始位置
+            }
+            var nodes = document.getElementsByTagName("script"); //只在head标签中寻找
+            for(var i = 0, node; node = nodes[i++];) {
+                if(node.readyState === "interactive") {
+                    return node.className = node.src;
+                }
+            }
+        };
 
         require.prototype._getCurrentPath = function(){
+            debugger;
             if(!document.scripts && !document.getElementsByTagName("script")) return;
             var scripts = document.scripts || document.getElementsByTagName("script");
             var fileReg = new RegExp("(^|(.*?\\/))(" + _default._baseFileName + ")(\\?|$)");
             var _path = "";
+            var isLt8 = ('' + document.querySelector).indexOf('[native code]') === -1;
             for(var i = 0;i < scripts.length;i++){
-                var src = scripts[i].src;
+                var src;
+                isLt8 ? src = scripts[i].getAttribute('src', 4) : src = scripts[i].src;
                 if(!src) continue;
                 var match = src.match(fileReg);
                 if(!match) continue;
@@ -447,8 +499,27 @@
         }
 
         define.prototype._init = function(){
+            debugger;
             if(!this._dep[0]){
                 var moduleName = document.currentScript && document.currentScript.id;
+                if(!moduleName){
+                    var moduleSrc = this._require._getCurrentScriptSrc();//get current src
+                    if(moduleSrc){//reset path
+                        if(moduleSrc.substring(moduleSrc.length,moduleSrc.length - 1) === "/"){
+                            moduleSrc = moduleSrc.substring(0,moduleSrc.length - 1)
+                        }
+
+                        var _fileName = moduleSrc.substring(moduleSrc.lastIndexOf('/') + 1,moduleSrc.length);
+                        if(_fileName.indexOf(".js")!= -1){
+                            moduleName = _fileName.split(".js")[0];
+                        }
+                        this._getCurrentPath = moduleSrc.substring(0,moduleSrc.lastIndexOf('/') + 1);
+                        this._getRootPath = this._require._getRootPath();
+                        this._require._currentPath = this._getCurrentPath;
+                        this._require._rootPath = this._getRootPath;
+                    }
+                }
+
                 if(moduleName){
                     this._dep[0] = moduleName;
                 }
@@ -487,10 +558,6 @@
                 }
 
                 this._require._save.call(this._require,module._moduleName,null,this._callback);
-
-                //this._require._defQueue.push(module);
-                //this._require._isCallback = false;
-                //this._require._nextTick.call(this._require);
             }
         };
 
