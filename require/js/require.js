@@ -91,7 +91,7 @@
                         self._defQueue.push(module);
                     }else{
                         module = _default._moduleCache[moduleName].module;
-                        if(module._loaded = false){
+                        if(module._loaded == false){
                             self._defQueue.push(module);
                         }else
                             self._NotDefQueue.push(module);
