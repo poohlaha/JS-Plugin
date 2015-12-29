@@ -36,7 +36,7 @@
             return this;
         };
 
-        require.prototype.deploy = function(deps,callback){
+        require.prototype.then = function(deps,callback){
             this._init.call(this,deps,callback);
             return this;
         };
