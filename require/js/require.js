@@ -139,7 +139,6 @@
         };
 
         require.prototype._checkLoaded = function(){
-            debugger;
             if(this._defQueue.length == 0) return;
             var self = this;
             var defQueueArr = self._defQueue;
@@ -296,10 +295,7 @@
             }
             if(stack) {
                 /**e.stack最后一行在所有支持的浏览器大致如下:
-                 *chrome23:
-                 *firefox17:
-                 *opera12:
-                 *IE10:
+                 *chrome23,firefox17,opera12,IE10
                  */
                 stack = stack.split( /[@ ]/g).pop();//取得最后一行,最后一个空格或@之后的部分
                 stack = stack[0] == "(" ? stack.slice(1,-1) : stack;
@@ -314,7 +310,6 @@
         };
 
         require.prototype._getCurrentPath = function(){
-            debugger;
             if(!document.scripts && !document.getElementsByTagName("script")) return;
             var scripts = document.scripts || document.getElementsByTagName("script");
             var fileReg = new RegExp("(^|(.*?\\/))(" + _default._baseFileName + ")(\\?|$)");
@@ -456,6 +451,21 @@
         Module.prototype._resolveFilePath = function(){
             if(!this._request) return;
 
+            //with http or https url
+            if(this._request.indexOf("http:") == 0 || this._request.indexOf("https:") == 0){
+                var moduleSrc = this._request;
+                if(this._request.substring(this._request.length,this._request.length - 1) === "/"){
+                    moduleSrc = this._request.substring(0,this._request.length - 1);
+                }
+                var _fileName = moduleSrc.substring(moduleSrc.lastIndexOf('/') + 1,moduleSrc.length);
+                moduleSrc = moduleSrc.substring(0,moduleSrc.lastIndexOf('/') + 1);
+                this._modulePath = moduleSrc;
+                this._fileName = _fileName;
+                this._getModuleName.call(this);
+                return;
+            }
+
+            //other url
             var start = '';
             var sub = this._request.substring(0,1);
             if(sub === "/")
@@ -499,7 +509,6 @@
         }
 
         define.prototype._init = function(){
-            debugger;
             if(!this._dep[0]){
                 var moduleName = document.currentScript && document.currentScript.id;
                 if(!moduleName){
